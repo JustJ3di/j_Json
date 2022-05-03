@@ -1,0 +1,8 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "type_traits": "c",
+        "hejson.h": "c"
+    },
+    "git.ignoreLimitWarning": true
+}

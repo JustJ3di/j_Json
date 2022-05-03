@@ -1,0 +1,1 @@
+gcc -o test src/main.c src/hejson.c -Wall -fanalyze
