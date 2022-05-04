@@ -1,4 +1,26 @@
 #include "hejson.h"
+
+//only debug fgetc2 definition
+#if DEBUG
+
+	int fgect2(FILE *pr,int line)
+	{
+		char c = fgetc(pr);
+		if (isspace(c)==0)
+		{
+			printf("(%c) trovato at line %d\n",c,line);
+		}
+		return c;
+	
+	}
+	
+#define fgetc(ch) fgect2(ch,__LINE__);
+
+#endif
+
+//SOLO PER DEBUG
+inline static void print_token(char *token){printf("catturato (%s)\n",token);}
+
 //check memory call it after every malloc
 inline static void check_memory(void *pointer){
 
@@ -400,7 +422,8 @@ void dealloc(Json **json_head_ref)
 
 
 
-inline static FILE *open_file(const char *filename){
+inline static FILE *open_file(const char *filename)
+{
 
     FILE *pr = fopen(filename,"r");
     if (pr == NULL)
@@ -411,7 +434,8 @@ inline static FILE *open_file(const char *filename){
     return pr;
 }
 
-static Json *parse_null(FILE *pr){
+static Json *parse_null(FILE *pr)
+{
 
     char token[5];
     token[0] = 'n';
@@ -430,7 +454,8 @@ static Json *parse_null(FILE *pr){
     
 }
 
-static Json *parse_boolean(FILE *pr,Json **json,char first){
+static Json *parse_boolean(FILE *pr,Json **json,char first)
+{
 
     size_t size;
 
@@ -445,7 +470,7 @@ static Json *parse_boolean(FILE *pr,Json **json,char first){
 
     for (size_t i = 1; i < size; i++)
         token[i] = fgetc(pr);
-    
+
     token[size] = '\0';
 
     if (strcmp(token,"true") == 0)
@@ -460,6 +485,35 @@ static Json *parse_boolean(FILE *pr,Json **json,char first){
         parse_error(token);
     
     return *json;
+}
+
+
+static  Json *parse_numeric(FILE *pr,Json **json,char first)
+{
+    char number[MAX_INPUT];
+    if (isdigit(first))
+    {   
+        number[0] = first;
+        int i = 1;
+        while (isdigit(first))
+        {
+            first = fgetc(pr);
+            number[i] = first;
+            i++;
+        }
+        number[i-1] = '\0';
+#if DEBUG
+        print_token(number);
+#endif
+    }
+
+    *json = alloc_simple(INT);
+
+    (*json)->new_simple_object.obj_integer = atoi(number);
+
+    return *json;
+
+
 }
 
 Json *Json_parse(const char *filename){
@@ -483,14 +537,23 @@ Json *Json_parse(const char *filename){
     case 'f':
         parse_boolean(pr, &json, c);
         break;
+    case EOF:
+        json = (Json *)malloc(sizeof(Json));
+        break;
     default:
         if(isspace(c))
             break;
-        if (isdigit(c) || '-')
+        else if (isdigit(c)>0 || '-')
         {
-            
+            parse_numeric(pr,&json,c);
             break;
         }
+        else
+        {
+            parse_char_error(c);
+            break; 
+        }
+
 
         
     }

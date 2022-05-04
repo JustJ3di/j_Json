@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+
+#define DEBUG 0
 
 //DEFINE THE BOOLEAN TYPE:
 typedef enum {false,true}boolean;
@@ -19,11 +22,18 @@ typedef enum {false,true}boolean;
 }
 
 
-//BAD CHAR TO PARSE
+//BAD token TO PARSE
 #define parse_error(ch){\
 	fprintf(stderr, "value = (%s) is not possible to parse\n",ch);\
 	exit(EXIT_FAILURE);\
 }
+
+//BAD CHAR TO PARSE
+#define parse_char_error(ch){ \
+	fprintf(stderr, "value = (%c) is not possible to parse\n",ch);\
+	exit(EXIT_FAILURE);\
+}
+
 
 /*
 	Now I have to define the structure that will manage the parser.
