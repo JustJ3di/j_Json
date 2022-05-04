@@ -393,7 +393,11 @@ void dealloc_dict(Dict **dict_head_ref)
 
 void dealloc(Json **json_head_ref)
 {
-
+    if ((*json_head_ref) == NULL)
+    {
+        return;
+    }
+    
     switch ((*json_head_ref)->type)
     {
         case SIMPLE:
@@ -434,7 +438,7 @@ inline static FILE *open_file(const char *filename)
     return pr;
 }
 
-static Json *parse_null(FILE *pr)
+static void get_null(FILE *pr)
 {
 
     char token[5];
@@ -447,84 +451,241 @@ static Json *parse_null(FILE *pr)
     if (strcmp("null",token))
     {
         parse_error(token,pr);
+        
     }
 
+    return;
+}
+
+static Json *parse_null(FILE *pr)
+{
+
+    get_null(pr);
+        
 
     return alloc_simple(NULL_);
     
 }
 
-static Json *parse_boolean(FILE *pr,Json **json,char first)
+
+//return an alloc
+static boolean get_bool(FILE *pr,char first)
 {
 
     size_t size;
+
+    char token[6];
+
+    token[0] = first;
 
     if (first == 't')
         size = 4;
     else
         size = 5;
 
-    char token[6];
-
-    token[0] = first;
-
     for (size_t i = 1; i < size; i++)
         token[i] = fgetc(pr);
 
     token[size] = '\0';
 
-    if (strcmp(token,"true") == 0)
-    {
-        *json = alloc_simple(BOOL);
-        (*json)->new_simple_object.obj_bool = true;
-    }else if(strcmp(token,"false") == 0)
-    {
-        *json = alloc_simple(BOOL);
-        (*json)->new_simple_object.obj_bool = false;  
-    }else
-        parse_error(token,pr);
+#if DEBUG
+    print_token(token);
+#endif
+
+    if (!strcmp(token,"true"))
+        return true;
+    else if (!strcmp(token,"false"))
+        return false;
+    else
+        return -1;
     
+    
+
+}
+
+static Json *parse_boolean(FILE *pr,Json **json,char first)
+{
+    boolean value =  get_bool(pr,first);
+    if (value == true || value == false)
+    {
+        *json = alloc_simple(BOOL);
+        (*json)->new_simple_object.obj_bool = value;
+    }else
+        parse_char_error(first,pr);
     return *json;
 }
 
-
-static  Json *parse_numeric(FILE *pr,Json **json,char first)
+static void get_num(FILE *pr,char first,char *number,int *dot)
 {
-    char number[MAX_INPUT];
+
+    int i = 0;    
+
 
     if (isdigit(first) || first == '-')
     {   
         number[0] = first;
+        *dot = 0;
+        i = 1;
 
-        int i = 1;
         first = fgetc(pr);
-        if (!isdigit(first))
+        if (!isdigit(first) && first != '.')
             parse_char_error(first,pr);
         
+        number[1] = first;
+        i++;
         
         while (isdigit(first))
         {
+
             first = fgetc(pr);
             number[i] = first;
             i++;
+        }if (first == '.')
+        {
+            *dot = 1;
+            first = fgetc(pr);
+            number[i] = first;
+            i++;
+            while (isdigit(first))
+            {
+
+                first = fgetc(pr);
+                number[i] = first;
+                i++;
+            }
+            
         }
         
+      
         number[i-1] = '\0';
+
 
 #if DEBUG
         print_token(number);
 #endif
 
     }
-    //push on json object a 
-    *json = alloc_simple(INT);
 
-    (*json)->new_simple_object.obj_integer = atoi(number);
+}
+
+static  Json *parse_numeric(FILE *pr,Json **json,char first)
+{
+    char number[MAX_INPUT];
+    
+    int dot = 0;
+
+    get_num(pr,first,number,&dot);
+
+/*    int dot;
+
+    if (isdigit(first) || first == '-')
+    {   
+        number[0] = first;
+        dot = 0;
+        int i = 1;
+
+        first = fgetc(pr);
+        if (!isdigit(first) && first != '.')
+            parse_char_error(first,pr);
+        
+        number[1] = first;
+        i++;
+        
+        while (isdigit(first))
+        {
+
+            first = fgetc(pr);
+            number[i] = first;
+            i++;
+        }if (first == '.')
+        {
+            dot = 1;
+            first = fgetc(pr);
+            number[i] = first;
+            i++;
+            while (isdigit(first))
+            {
+
+                first = fgetc(pr);
+                number[i] = first;
+                i++;
+            }
+            
+        }
+        
+      
+        number[i-1] = '\0';
+
+
+#if DEBUG
+        print_token(number);
+#endif
+
+    }*/
+
+
+
+    //push on json object a 
+    if (dot == 0)
+    {
+        *json = alloc_simple(INT);
+
+        (*json)->new_simple_object.obj_integer = atoi(number);    
+    }else
+    {
+        *json = alloc_simple(DOUBLE);
+
+        (*json)->new_simple_object.obj_double = atof(number);  
+    }
+    
 
     return *json;
 
 
 }
+
+static Json *parse_string(FILE *pr,Json **json,char first)
+{
+    char *token = malloc(63566);
+
+    
+    int i = 0;
+    token[i] = first;
+    i = 1;
+
+    do
+    {
+        first = fgetc(pr);
+        token[i] = first;
+        i++;
+        if (first == EOF){
+
+            free(token);
+            parse_char_error(first,pr);
+        }
+        
+
+    } while (first != '"');
+    
+    token[i] = '\0';
+    
+#if DEBUG
+    print_token(token);
+#endif
+
+    *json = alloc_simple(STRING);
+    (*json)->new_simple_object.obj_string = malloc(strlen(token) + 1);
+    strcpy((*json)->new_simple_object.obj_string,token);
+    
+    //free the token
+    free(token);
+    
+    return *json;
+
+}
+
+
+
 
 Json *Json_parse(const char *filename){
     
@@ -542,6 +703,9 @@ Json *Json_parse(const char *filename){
         break;
     case 'n':
         json = parse_null(pr);
+        break;
+    case '"':
+        parse_string(pr,&json,c);
         break;
     case 't':
     case 'f':
