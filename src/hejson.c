@@ -35,7 +35,6 @@ static void set_simple_in_dict(Dict *new_object , int type_element , void *value
         }
         break;
     case NULL_:
-        new_object->element.obj_null = NULL;
         break;
     case STRING://i tipi string devon oessere deallocati apparte
         {
@@ -81,7 +80,6 @@ static void set_simple_in_array(Array *new_object , int type_element , void *val
         }
         break;
     case NULL_:
-        new_object->element.obj_null = NULL;
         break;
     case STRING://i tipi string devon oessere deallocati apparte
         {
@@ -102,7 +100,7 @@ static void set_simple_in_array(Array *new_object , int type_element , void *val
 inline static void set_key(Dict *new_object,const char *key)
 {
 
-    int i = 0;
+    size_t i = 0;
     while (i  < strlen(key) + 1)
     {
         new_object->key[i] = key[i];
@@ -394,10 +392,6 @@ void dealloc(Json **json_head_ref)
             dealloc_array(&((*json_head_ref)->new_array));
 
             break;
-
-        default:
-
-            break;
     }
 
     free(*json_head_ref);
@@ -405,38 +399,74 @@ void dealloc(Json **json_head_ref)
 }
 
 
-/*
+
 inline static FILE *open_file(const char *filename){
 
     FILE *pr = fopen(filename,"r");
     if (pr == NULL)
     {
-        perror("Error file not fount\n");
+        perror("Error file not found\n");
         exit(EXIT_FAILURE);
     }
     return pr;
 }
 
+static Json *parse_null(FILE *pr){
+
+    char token[5];
+    token[0] = 'n';
+    for (size_t i = 1; i < 4; i++)
+    {
+        token[i] = fgetc(pr);
+    }
+    token[4] ='\0';
+    if (strcmp("null",token))
+    {
+        parse_error(token);
+    }
+
+
+    return alloc_simple(NULL_);
+    
+}
+
 
 Json *Json_parse(const char *filename){
-
     
-
-    switch (json->type)
+    Json *json;
+    
+    FILE *pr = open_file(filename);
+    
+    char c = fgetc(pr);
+    switch (c)
     {
-    case ARRAY:
-        
+    case '{':
+        /* code */
         break;
-    case DICT:
+    case '[':
         break;
-    case SIMPLE:
+    case 'n':
+        json = parse_null(pr);
         break;
-
+    case 't':
+    case 'f':
+        break;
     default:
-        break;
+        if(isspace(c))
+            break;
+        if (isdigit(c) || '-')
+        {
+            
+            break;
+        }
+
+        
     }
+    
+    fclose(pr);
 
     return json;
 
 }
-*/
+
+

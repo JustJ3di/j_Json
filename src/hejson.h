@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 //DEFINE THE BOOLEAN TYPE:
 typedef enum {false,true}boolean;
@@ -20,7 +21,7 @@ typedef enum {false,true}boolean;
 
 //BAD CHAR TO PARSE
 #define parse_error(ch){\
-	fprintf(stderr, "characher = (%c) s not possible to parse\n",ch);\
+	fprintf(stderr, "value = (%s) is not possible to parse\n",ch);\
 	exit(EXIT_FAILURE);\
 }
 
@@ -56,7 +57,6 @@ typedef struct{
 	union{
 		int obj_integer;
 		char *obj_string;
-		void *obj_null;
 		double obj_double;
 		boolean obj_bool;
 	};
@@ -138,7 +138,6 @@ void dealloc_dict(Dict **json_head_ref);
 
 //dealloc of array object
 void dealloc_array(Array **json_head_ref);
-
 
 Json *Json_parse(const char *filename);
 

@@ -3,9 +3,11 @@
 
 int main()
 {
-    Json *new = alloc_struct_object(ARRAY);
+    Json *new = Json_parse("prova.json");
 
+    printf("%d\n",new->new_simple_object.type);
 
+/*
     char *value = "ciao";
 
     push_on_array_simple(&(new->new_array) , value  , STRING);
@@ -21,9 +23,11 @@ int main()
     push_on_dict_a_simple(&(new->new_array->new_dict_head),"ciao","ciasss", STRING);
 
     printf("ciao\n");
-    
+*/
 
     dealloc(&new);
+
+ 
 
     return 0;
 }
