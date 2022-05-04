@@ -446,7 +446,7 @@ static Json *parse_null(FILE *pr)
     token[4] ='\0';
     if (strcmp("null",token))
     {
-        parse_error(token);
+        parse_error(token,pr);
     }
 
 
@@ -482,7 +482,7 @@ static Json *parse_boolean(FILE *pr,Json **json,char first)
         *json = alloc_simple(BOOL);
         (*json)->new_simple_object.obj_bool = false;  
     }else
-        parse_error(token);
+        parse_error(token,pr);
     
     return *json;
 }
@@ -491,22 +491,32 @@ static Json *parse_boolean(FILE *pr,Json **json,char first)
 static  Json *parse_numeric(FILE *pr,Json **json,char first)
 {
     char number[MAX_INPUT];
-    if (isdigit(first))
+
+    if (isdigit(first) || first == '-')
     {   
         number[0] = first;
+
         int i = 1;
+        first = fgetc(pr);
+        if (!isdigit(first))
+            parse_char_error(first,pr);
+        
+        
         while (isdigit(first))
         {
             first = fgetc(pr);
             number[i] = first;
             i++;
         }
+        
         number[i-1] = '\0';
+
 #if DEBUG
         print_token(number);
 #endif
-    }
 
+    }
+    //push on json object a 
     *json = alloc_simple(INT);
 
     (*json)->new_simple_object.obj_integer = atoi(number);
@@ -550,7 +560,7 @@ Json *Json_parse(const char *filename){
         }
         else
         {
-            parse_char_error(c);
+            parse_char_error(c,pr);
             break; 
         }
 

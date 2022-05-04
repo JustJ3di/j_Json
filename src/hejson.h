@@ -7,7 +7,7 @@
 #include <ctype.h>
 #include <limits.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 //DEFINE THE BOOLEAN TYPE:
 typedef enum {false,true}boolean;
@@ -23,14 +23,16 @@ typedef enum {false,true}boolean;
 
 
 //BAD token TO PARSE
-#define parse_error(ch){\
+#define parse_error(ch,pr){\
 	fprintf(stderr, "value = (%s) is not possible to parse\n",ch);\
+	fclose(pr);\
 	exit(EXIT_FAILURE);\
 }
 
 //BAD CHAR TO PARSE
-#define parse_char_error(ch){ \
+#define parse_char_error(ch,pr){ \
 	fprintf(stderr, "value = (%c) is not possible to parse\n",ch);\
+	fclose(pr); \
 	exit(EXIT_FAILURE);\
 }
 
