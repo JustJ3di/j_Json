@@ -430,6 +430,37 @@ static Json *parse_null(FILE *pr){
     
 }
 
+static Json *parse_boolean(FILE *pr,Json **json,char first){
+
+    size_t size;
+
+    if (first == 't')
+        size = 4;
+    else
+        size = 5;
+
+    char token[6];
+
+    token[0] = first;
+
+    for (size_t i = 1; i < size; i++)
+        token[i] = fgetc(pr);
+    
+    token[size] = '\0';
+
+    if (strcmp(token,"true") == 0)
+    {
+        *json = alloc_simple(BOOL);
+        (*json)->new_simple_object.obj_bool = true;
+    }else if(strcmp(token,"false") == 0)
+    {
+        *json = alloc_simple(BOOL);
+        (*json)->new_simple_object.obj_bool = false;  
+    }else
+        parse_error(token);
+    
+    return *json;
+}
 
 Json *Json_parse(const char *filename){
     
@@ -450,6 +481,7 @@ Json *Json_parse(const char *filename){
         break;
     case 't':
     case 'f':
+        parse_boolean(pr, &json, c);
         break;
     default:
         if(isspace(c))
