@@ -644,11 +644,9 @@ static  Json *parse_numeric(FILE *pr,Json **json,char first)
 
 }
 
-static Json *parse_string(FILE *pr,Json **json,char first)
+static void get_string(FILE *pr,char first,char *token)
 {
-    char *token = malloc(63566);
 
-    
     int i = 0;
     token[i] = first;
     i = 1;
@@ -673,10 +671,45 @@ static Json *parse_string(FILE *pr,Json **json,char first)
     print_token(token);
 #endif
 
+
+}
+
+static Json *parse_string(FILE *pr,Json **json,char first)
+{
+    char *token = malloc(63566);
+
+    get_string(pr,first,token);
+
+/*    
+    int i = 0;
+    token[i] = first;
+    i = 1;
+
+    do
+    {
+        first = fgetc(pr);
+        token[i] = first;
+        i++;
+        if (first == EOF){
+
+            free(token);
+            parse_char_error(first,pr);
+        }
+        
+
+    } while (first != '"');
+    
+    token[i] = '\0';
+    
+#if DEBUG
+    print_token(token);
+#endif
+*/
     *json = alloc_simple(STRING);
     (*json)->new_simple_object.obj_string = malloc(strlen(token) + 1);
     strcpy((*json)->new_simple_object.obj_string,token);
-    
+
+
     //free the token
     free(token);
     
@@ -689,7 +722,7 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 
 Json *Json_parse(const char *filename){
     
-    Json *json;
+    Json *json = NULL;
     
     FILE *pr = open_file(filename);
     
@@ -717,7 +750,7 @@ Json *Json_parse(const char *filename){
     default:
         if(isspace(c))
             break;
-        else if (isdigit(c)>0 || '-')
+        else if (isdigit(c)>0 || c =='-')
         {
             parse_numeric(pr,&json,c);
             break;

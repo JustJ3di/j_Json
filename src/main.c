@@ -5,7 +5,7 @@ int main()
 {
     Json *new = Json_parse("prova.json");
 
-    printf("%d\n",new->new_simple_object.obj_integer);
+    printf("%s\n",new->new_simple_object.obj_string);
 
 /*
     char *value = "ciao";
