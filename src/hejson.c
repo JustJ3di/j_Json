@@ -97,8 +97,9 @@ static void set_simple_in_array(Array *new_object , int type_element , void *val
         break;
     case DOUBLE:
         {
-            double *value_double = (double *)value;
+            double *value_double = value;
             new_object->element.obj_double = *value_double;
+
         }
         break;
     case NULL_:
@@ -106,6 +107,7 @@ static void set_simple_in_array(Array *new_object , int type_element , void *val
     case STRING://i tipi string devon oessere deallocati apparte
         {
             new_object->element.obj_string = (char *)malloc(strlen((char *)value) + 1);
+            
             strcpy(new_object->element.obj_string,(char *)value);
         }
         break;
@@ -521,6 +523,7 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
     int i = 0;    
 
 
+
     if (isdigit(first) || first == '-')
     {   
         number[0] = first;
@@ -528,9 +531,11 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
         i = 1;
 
         first = fgetc(pr);
-        if (!isdigit(first) && first != '.')
+
+
+        if (isdigit(first) == 0 && first != '.' && first != ',' && isspace(first)>0)
             parse_char_error(first,pr);
-        
+     
         number[1] = first;
         i++;
         
@@ -540,7 +545,9 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
             first = fgetc(pr);
             number[i] = first;
             i++;
-        }if (first == '.')
+
+        }
+        if (first == '.')
         {
             *dot = 1;
             first = fgetc(pr);
@@ -718,6 +725,87 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 }
 
 
+static Json *parse_array(FILE *pr,Json **json,Array **head){
+
+    Array **head_ref = NULL;
+    if(head == NULL){
+
+        *json = alloc_struct_object(ARRAY);
+        head_ref = &(*json)->new_array;
+
+    }else
+        head_ref = head;
+    char c;
+
+    do 
+    {
+        c = fgetc(pr);
+        switch (c)
+        {
+        case ',':
+            break;
+        case '{':
+            /* code */
+            break;
+        case '[':
+            push_on_array_a_struct((head_ref),ARRAY);
+            parse_array(pr,json,&(*head_ref)->new_head);
+            break;
+        case 'n':
+            get_null(pr);
+            push_on_array_simple((head_ref),NULL,NULL_);
+            break;
+        case '"':
+            {
+                char *token = malloc(10000);
+                get_string(pr,c,token);
+                push_on_array_simple((head_ref),(void *)token,STRING);
+                free(token);
+            }
+            break;
+        case 't':
+        case 'f':
+            {
+                boolean n = get_bool(pr,c);
+                boolean *value  = &n;
+                push_on_array_simple(head_ref,(void *)value,BOOL);
+            }
+            break;
+        case ']':
+        case EOF:
+            return *json;
+        default:
+            if(isspace(c))
+                break;
+            else if (isdigit(c)>0 || c =='-')
+            {   
+                int dot = 0;
+                char *number = malloc(MAX_INPUT);
+                get_num(pr,c,number,&dot);
+
+                if (dot == 0)
+                {
+                    int value = atoi(number);
+                    push_on_array_simple((head_ref),(void *)&value,INT);
+                }else if (dot == 1)
+                {
+                    
+                    double value = atof(number);
+                    double *c = &value;
+                    push_on_array_simple(head_ref,(void *)c,DOUBLE);
+                }
+                free(number);
+                
+                break;
+            }
+           break;
+        }
+        
+    }while ((c != EOF) || (c != ']'));
+
+    return *json;
+
+}
 
 
 Json *Json_parse(const char *filename){
@@ -733,6 +821,7 @@ Json *Json_parse(const char *filename){
         /* code */
         break;
     case '[':
+        json = parse_array(pr,&json,NULL);
         break;
     case 'n':
         json = parse_null(pr);
