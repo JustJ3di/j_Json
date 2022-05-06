@@ -44,6 +44,7 @@ typedef enum {false,true}boolean;
 
 //type simple object
 typedef enum{
+	
 	INT,
 	STRING,
 	NULL_,
@@ -157,6 +158,6 @@ Json *parse_object(FILE *pr);
 
 int Json_dump(FILE *pr,Json **);
 
-
+void print_json(Json **);
 
 #endif

@@ -5,8 +5,11 @@ int main()
 {
     Json *new = Json_parse("prova.json");
 
-    printf("%s\n",new->new_array->new_head->new_head->element.obj_string);   
-    
+ 
+    print_json(&new);
+
+    printf("\n");
+
 /*
     char *value = "ciao";
 

@@ -532,9 +532,6 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
 
         first = fgetc(pr);
 
-
-        if (isdigit(first) == 0 && first != '.' && first != ',' && isspace(first)>0)
-            parse_char_error(first,pr);
      
         number[1] = first;
         i++;
@@ -582,55 +579,6 @@ static  Json *parse_numeric(FILE *pr,Json **json,char first)
     int dot = 0;
 
     get_num(pr,first,number,&dot);
-
-/*    int dot;
-
-    if (isdigit(first) || first == '-')
-    {   
-        number[0] = first;
-        dot = 0;
-        int i = 1;
-
-        first = fgetc(pr);
-        if (!isdigit(first) && first != '.')
-            parse_char_error(first,pr);
-        
-        number[1] = first;
-        i++;
-        
-        while (isdigit(first))
-        {
-
-            first = fgetc(pr);
-            number[i] = first;
-            i++;
-        }if (first == '.')
-        {
-            dot = 1;
-            first = fgetc(pr);
-            number[i] = first;
-            i++;
-            while (isdigit(first))
-            {
-
-                first = fgetc(pr);
-                number[i] = first;
-                i++;
-            }
-            
-        }
-        
-      
-        number[i-1] = '\0';
-
-
-#if DEBUG
-        print_token(number);
-#endif
-
-    }*/
-
-
 
     //push on json object a 
     if (dot == 0)
@@ -687,31 +635,7 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 
     get_string(pr,first,token);
 
-/*    
-    int i = 0;
-    token[i] = first;
-    i = 1;
 
-    do
-    {
-        first = fgetc(pr);
-        token[i] = first;
-        i++;
-        if (first == EOF){
-
-            free(token);
-            parse_char_error(first,pr);
-        }
-        
-
-    } while (first != '"');
-    
-    token[i] = '\0';
-    
-#if DEBUG
-    print_token(token);
-#endif
-*/
     *json = alloc_simple(STRING);
     (*json)->new_simple_object.obj_string = malloc(strlen(token) + 1);
     strcpy((*json)->new_simple_object.obj_string,token);
@@ -857,6 +781,105 @@ Json *Json_parse(const char *filename){
     fclose(pr);
 
     return json;
+
+}
+
+static void print_array(Array **head)
+{
+
+    Array *current = *head;
+    printf("[");
+        
+        
+    while(current!=NULL)
+    {
+
+        switch (current->type)
+        {
+            case SIMPLE:
+                
+                    switch ((current)->element.type)
+                    {
+                    case STRING:
+                        printf("%s, ",(current)->element.obj_string);
+                        break;
+                    case BOOL:
+                        printf("%d, ",(current)->element.obj_bool);
+                        break;
+                    case NULL_:
+                        printf("null, ");
+                        break;
+                    case DOUBLE:
+                        printf("%f, ",(current)->element.obj_double);
+                        break;
+                    case INT:
+                        printf("%d, ",(current)->element.obj_integer);
+                        break;
+                    default:
+                        break;
+                    }
+
+                break;
+            case ARRAY:
+                print_array(&(*head)->new_head);
+                break;
+
+        
+        }
+        current = current->next_element;
+
+    }
+
+    
+    printf("]");
+
+}
+
+void print_json(Json **json_head_ref){
+
+
+    if ((*json_head_ref) == NULL)
+    {
+        return;
+    }
+    
+    switch ((*json_head_ref)->type)
+    {
+        case SIMPLE:
+            
+                switch ((*json_head_ref)->new_simple_object.type)
+                {
+                case STRING:
+                    printf("%s\n",(*json_head_ref)->new_simple_object.obj_string);
+                    break;
+                case BOOL:
+                    printf("%d\n",(*json_head_ref)->new_simple_object.obj_bool);
+                    break;
+                case NULL_:
+                    printf("null\n");
+                    break;
+                case DOUBLE:
+                    printf("%f\n",(*json_head_ref)->new_simple_object.obj_double);
+                    break;
+                case INT:
+                    printf("%d\n",(*json_head_ref)->new_simple_object.obj_integer);
+                    break;
+                default:
+                    break;
+                }
+
+            break;
+
+        case DICT:
+
+
+            break;
+
+        case ARRAY:
+            print_array(&(*json_head_ref)->new_array);
+
+            break;
+    }
 
 }
 
