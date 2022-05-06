@@ -427,7 +427,6 @@ void dealloc(Json **json_head_ref)
 }
 
 
-
 inline static FILE *open_file(const char *filename)
 {
 
@@ -469,8 +468,6 @@ static Json *parse_null(FILE *pr)
     
 }
 
-
-//return an alloc
 static boolean get_bool(FILE *pr,char first)
 {
 
@@ -648,7 +645,6 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 
 }
 
-
 static Json *parse_array(FILE *pr,Json **json,Array **head){
 
     Array **head_ref = NULL;
@@ -730,7 +726,6 @@ static Json *parse_array(FILE *pr,Json **json,Array **head){
     return *json;
 
 }
-
 
 Json *Json_parse(const char *filename){
     
