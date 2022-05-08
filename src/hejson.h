@@ -44,7 +44,7 @@ typedef enum {false,true}boolean;
 
 //type simple object
 typedef enum{
-	
+
 	INT,
 	STRING,
 	NULL_,
@@ -132,7 +132,7 @@ Json *alloc_struct_object(int type);
 
 //METHOD FOR THE DICT OBJECT
 Dict *push_on_dict_a_simple(Dict **head_dict , void *value , const char *key , int type);
-Dict *push_on_dict_a_struct(Dict **head_dict , int type);
+Dict *push_on_dict_struct(Dict **head_dict , const char * key,int type);
 
 //METHOD FOR THE ARRAY OBJECT
 Array *push_on_array_simple(Array **head_array , void *value , int type);

@@ -3,18 +3,18 @@
 //only debug fgetc2 definition
 #if DEBUG
 
-	int fgect2(FILE *pr,int line)
+	int fgect2(FILE *pr,int line,const char *fun)
 	{
 		char c = fgetc(pr);
 		if (isspace(c)==0)
 		{
-			printf("(%c) trovato at line %d\n",c,line);
+			printf("(%c) trovato in fun (%s) alla line %d \n",c,fun,line);
 		}
 		return c;
 	
 	}
 	
-#define fgetc(ch) fgect2(ch,__LINE__);
+#define fgetc(ch) fgect2(ch,__LINE__,__func__);
 
 #endif
 
@@ -180,10 +180,10 @@ Dict *push_on_dict_a_simple(Dict **head , void *value , const char *key , int ty
 }
 
 //push on dicy a struct object
-Dict *push_on_dict_struct(Dict **head, int type)
+Dict *push_on_dict_struct(Dict **head, const char *key ,int type)
 {
 
-    Dict *new_object = (Dict *)malloc(sizeof(Dict));
+    Dict *new_object = (Dict *)malloc(sizeof(Dict)+ strlen(key) + 1);
 
     check_memory(new_object);
 
@@ -202,6 +202,12 @@ Dict *push_on_dict_struct(Dict **head, int type)
 
 
     new_object->next_element = (*head);
+
+    for (size_t i = 0; i < strlen(key)+1; i++)
+    {
+        new_object->key[i] = key[i];
+    }
+    
 
     if (*head != NULL)
         (*head)->previous_element = new_object;
@@ -645,7 +651,13 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 
 }
 
-static Json *parse_array(FILE *pr,Json **json,Array **head){
+static int j = 0;
+
+static Json *parse_array(FILE *pr,Json **json,Array **head)
+{
+
+    j++;
+    printf("####################%d\n",j);
 
     Array **head_ref = NULL;
     if(head == NULL){
@@ -657,11 +669,15 @@ static Json *parse_array(FILE *pr,Json **json,Array **head){
         head_ref = head;
     char c;
 
-    do 
+    while (true)
     {
+
         c = fgetc(pr);
+        
         switch (c)
         {
+        case ':':
+            parse_char_error(c,pr);   
         case ',':
             break;
         case '{':
@@ -691,12 +707,15 @@ static Json *parse_array(FILE *pr,Json **json,Array **head){
                 push_on_array_simple(head_ref,(void *)value,BOOL);
             }
             break;
+
         case ']':
         case EOF:
+
             return *json;
+
         default:
             if(isspace(c))
-                break;
+                goto ignore;
             else if (isdigit(c)>0 || c =='-')
             {   
                 int dot = 0;
@@ -716,16 +735,148 @@ static Json *parse_array(FILE *pr,Json **json,Array **head){
                 }
                 free(number);
                 
-                break;
             }
+ignore:
            break;
         }
         
-    }while ((c != EOF) || (c != ']'));
+    }
 
+}
+
+static Json *parse_dict(FILE *pr,Json **json,Dict **head)
+{
+
+    Dict **head_ref = NULL;
+    if (head == NULL)
+    {
+
+        *json = alloc_struct_object(DICT);
+        head_ref = &(*json)->new_dict;
+
+    }else
+        head_ref = head;
+    
+    char c ;
+    char *key = NULL;
+    boolean key_found = false;
+    do
+    {
+        c = fgetc(pr);
+
+        switch(c)
+        {
+            case ',':
+                if(key != NULL)
+                    free(key);
+                
+                key_found = false;
+                break;
+            case ':':
+                if (key_found == true)
+                    exit(EXIT_FAILURE);
+                else
+                    key_found = true;
+                    
+                break;
+                
+            case '{':
+                if (key_found == false){
+                    printf("key not found");
+                    exit(EXIT_FAILURE);
+                }else
+                    key_found = true;
+
+                push_on_dict_struct(head_ref,key,DICT);    
+                parse_dict(pr,json,&(*head_ref)->new_head);
+                break;
+            case '[':
+                if (key_found == false){
+                    printf("key not found");
+                    exit(EXIT_FAILURE);
+                }else
+                    key_found = true;
+                push_on_dict_struct(head_ref , key,ARRAY);       
+               
+                parse_array(pr,json,&(*head_ref)->new_array);
+                break;
+            case 'n':
+                if (key_found == false){
+                    printf("key not found");
+                    exit(EXIT_FAILURE);
+                }
+                get_null(pr);
+                push_on_dict_a_simple((head_ref),NULL,key,NULL_);
+                break;
+            case '"':
+                if(key_found == false)
+                {
+                    if (key!= NULL)
+                        free(key);
+                    key = malloc(10000);
+                    get_string(pr,c,key);  
+                }
+                else   
+                {
+                    char *token = malloc(10000);
+                    get_string(pr,c,token);
+                    push_on_dict_a_simple((head_ref),(void *)token,key,STRING);
+                    free(token);
+                }
+
+                break;
+            case 't':
+            case 'f':
+                {
+
+                    boolean n = get_bool(pr,c);
+                    boolean *value  = &n;
+                    push_on_dict_a_simple(head_ref,(void *)value,key,BOOL);
+
+                }
+                break;
+           case EOF:
+           case '}':
+            return *json;
+        default:
+            if(isspace(c))
+                goto ignore;
+            else if (isdigit(c)>0 || c =='-')
+            {   
+                int dot = 0;
+                char *number = malloc(MAX_INPUT);
+                get_num(pr,c,number,&dot);
+
+                if (dot == 0)
+                {
+                
+                    int value = atoi(number);
+                    push_on_dict_a_simple((head_ref),(void *)&value,key,INT);
+                
+                }else if (dot == 1)
+                {
+                    
+                    double value = atof(number);
+                    push_on_dict_a_simple(head_ref,(void *)&value,key,DOUBLE);
+                
+                }
+                free(number);
+                
+                
+            }
+ignore:
+           break;            
+
+        }
+
+        
+
+    } while ((c != EOF) || (c!= ']'));
+    
     return *json;
 
 }
+
 
 Json *Json_parse(const char *filename){
     
@@ -737,7 +888,7 @@ Json *Json_parse(const char *filename){
     switch (c)
     {
     case '{':
-        /* code */
+        json = parse_dict(pr,&json,NULL);
         break;
     case '[':
         json = parse_array(pr,&json,NULL);
@@ -779,19 +930,25 @@ Json *Json_parse(const char *filename){
 
 }
 
+static int i = 0;
+
 static void print_array(Array **head)
 {
 
     Array *current = *head;
     printf("[");
-        
-        
-    while(current!=NULL)
+    i += 1;
+    if (current == NULL)
     {
-
+        return;
+    }
+    
+    while(current)
+    {
         switch (current->type)
         {
             case SIMPLE:
+
                 
                     switch ((current)->element.type)
                     {
@@ -816,8 +973,8 @@ static void print_array(Array **head)
 
                 break;
             case ARRAY:
+               
                 print_array(&(*head)->new_head);
-                break;
 
         
         }
