@@ -753,7 +753,12 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
         head_ref = head;
     
     char c ;
-    char *key = NULL;
+    char key[255];
+    for (size_t i = 0; i < 255; i++)
+    {
+        key[i]= 'a';
+    }
+    
     boolean key_found = false;
     while(true)
     {
@@ -762,13 +767,11 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
         switch(c)
         {
             case ',':
-                
-                free(key);
-                
+                            
                 key_found = false;
                 break;
             case ':':
-                if (key_found == true)
+                if (key_found != true)
                     exit(EXIT_FAILURE);
                 else
                     key_found = true;
@@ -777,7 +780,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 
             case '{':
                 if (key_found == false){
-                    printf("key not found");
+                    printf("key not found\n");
                     exit(EXIT_FAILURE);
                 }else
                     key_found = true;
@@ -787,7 +790,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 break;
             case '[':
                 if (key_found == false){
-                    printf("key not found");
+                    printf("key not found\n");
                     exit(EXIT_FAILURE);
                 }else
                     key_found = true;
@@ -797,7 +800,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 break;
             case 'n':
                 if (key_found == false){
-                    printf("key not found");
+                    printf("key not found\n");
                     exit(EXIT_FAILURE);
                 }
                 get_null(pr);
@@ -806,9 +809,9 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
             case '"':
                 if(key_found == false)
                 {
-                    key = malloc(10000);
+               
                     get_string(pr,c,key); 
-                    key_found == true ;
+                    key_found = true ;
                 }
                 else   
                 {
@@ -831,7 +834,6 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 break;
            case EOF:
            case '}':
-            free(key);
             return *json;
         default:
             if(isspace(c))
