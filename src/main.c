@@ -5,7 +5,8 @@ int main()
 {
     Json *new = Json_parse("prova.json");
 
-    printf("(%d)\n",new->new_array->new_head->next_element->new_head->element.obj_integer);
+    printf("(%s), (%d)",new->new_dict->key,new->new_dict->new_array->new_head->element.obj_integer);
+    
     //print_json(&new);
 
     //printf("\n");
@@ -28,7 +29,7 @@ int main()
     printf("ciao\n");
 */
 
-    dealloc(&new);
+    //dealloc(&new);
 
  
 

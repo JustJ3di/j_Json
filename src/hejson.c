@@ -651,13 +651,8 @@ static Json *parse_string(FILE *pr,Json **json,char first)
 
 }
 
-static int j = 0;
-
 static Json *parse_array(FILE *pr,Json **json,Array **head)
 {
-
-    j++;
-    printf("####################%d\n",j);
 
     Array **head_ref = NULL;
     if(head == NULL){
@@ -760,15 +755,15 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
     char c ;
     char *key = NULL;
     boolean key_found = false;
-    do
+    while(true)
     {
         c = fgetc(pr);
 
         switch(c)
         {
             case ',':
-                if(key != NULL)
-                    free(key);
+                
+                free(key);
                 
                 key_found = false;
                 break;
@@ -811,10 +806,9 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
             case '"':
                 if(key_found == false)
                 {
-                    if (key!= NULL)
-                        free(key);
                     key = malloc(10000);
-                    get_string(pr,c,key);  
+                    get_string(pr,c,key); 
+                    key_found == true ;
                 }
                 else   
                 {
@@ -837,6 +831,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 break;
            case EOF:
            case '}':
+            free(key);
             return *json;
         default:
             if(isspace(c))
@@ -871,7 +866,7 @@ ignore:
 
         
 
-    } while ((c != EOF) || (c!= ']'));
+    } 
     
     return *json;
 
@@ -930,14 +925,12 @@ Json *Json_parse(const char *filename){
 
 }
 
-static int i = 0;
 
 static void print_array(Array **head)
 {
 
     Array *current = *head;
     printf("[");
-    i += 1;
     if (current == NULL)
     {
         return;
