@@ -5,10 +5,10 @@ int main()
 {
     Json *new = Json_parse("prova.json");
 
-    //printf("(%s), (%d)\n",new->new_dict->new_head->key,new->new_dict->new_head->element.obj_integer);
+    //printf("(%s), (%d)\n",new->new_dict->new_head->key, new->new_dict->new_head->element.obj_integer);
     
-    //print_json(&new);
-
+    print_json(&new);
+    
     //printf("\n");
 
 /*

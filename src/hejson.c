@@ -231,6 +231,8 @@ Array *push_on_array_simple(Array **head , void *value , int type_simple)
 
     new_object->next_element = *head;
     
+    new_object->previous_element = NULL;
+
     if (*head != NULL)
     {
         (*head)->previous_element = new_object;
@@ -313,6 +315,7 @@ Json *alloc_struct_object(int type)
 {
 
     Json *new = (Json *)malloc(sizeof(Json));
+
     switch (type)
     {
     case ARRAY:
@@ -525,8 +528,6 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
 
     int i = 0;    
 
-
-
     if (isdigit(first) || first == '-')
     {   
         number[0] = first;
@@ -545,22 +546,14 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
             first = fgetc(pr);
             number[i] = first;
             i++;
-
-        }
-        if (first == '.')
-        {
-            *dot = 1;
-            first = fgetc(pr);
-            number[i] = first;
-            i++;
-            while (isdigit(first))
+            if (first == '.')//case float
             {
-
+                *dot = 1;
                 first = fgetc(pr);
                 number[i] = first;
                 i++;
+                continue;
             }
-            
         }
         
       
@@ -742,7 +735,7 @@ ignore:
 static Json *parse_dict(FILE *pr,Json **json,Dict **head)
 {
 
-    Dict **head_ref = NULL;
+    Dict **head_ref;
     if (head == NULL)
     {
 
@@ -753,11 +746,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
         head_ref = head;
     
     char c ;
-    char key[255];
-    for (size_t i = 0; i < 255; i++)
-    {
-        key[i]= 'a';
-    }
+    char *key = malloc(400);
     
     boolean key_found = false;
     while(true)
@@ -834,6 +823,7 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
                 break;
            case EOF:
            case '}':
+            free(key);
             return *json;
         default:
             if(isspace(c))
@@ -846,7 +836,9 @@ static Json *parse_dict(FILE *pr,Json **json,Dict **head)
 
                 if (dot == 0)
                 {
-                
+#if DEBUG
+                printf("key = (%s)\n",key);
+#endif
                     int value = atoi(number);
                     push_on_dict_a_simple((head_ref),(void *)&value,key,INT);
                 
@@ -968,10 +960,10 @@ static void print_array(Array **head)
 
                 break;
             case ARRAY:
-               
+                
                 print_array(&(*head)->new_head);
-
-        
+                
+  
         }
         current = current->next_element;
 
