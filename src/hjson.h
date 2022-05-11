@@ -18,6 +18,12 @@ enum{
     START //STAR LINKED :)
 };
 
+enum{
+	ARRAY,
+	SIMPLE,
+	DICT
+};
+
 typedef struct json{
 
     char *key; // key for the dict object
@@ -47,7 +53,7 @@ void push_json_null(Json **head_ref, char *eventualy_key);
 
 void push_json_json(Json **head_ref, char *eventualy_key);
 
-void json_parse(Json **head_ref, FILE *pr);
+Json *json_parse(Json **head_ref, FILE *pr);
 
 
 

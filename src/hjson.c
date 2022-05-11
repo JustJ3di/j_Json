@@ -189,50 +189,167 @@ void push_json_json(Json **head_ref, char *eventualy_key)
 
 }
 
+static void get_null(FILE *pr){
 
-void json_parse(Json **head_ref, FILE *pr)
+    char token[10000];
+    token[0] = 'n';
+    for (size_t i = 1; i < 4; i++)
+    {
+        token[i] = fgetc(pr);
+    }
+    token[4] ='\0';
+    if (strcmp("null",token))
+    {
+        printf("Error null value not found\n");
+        
+    }
+
+    return;
+
+}
+
+static bool get_boolean(FILE *pr, char first) //first is the first char to parse
+{
+    size_t size;
+
+    char token[6];
+
+    token[0] = first;
+
+    if (first == 't')
+        size = 4;
+    else
+        size = 5;
+
+    for (size_t i = 1; i < size; i++)
+        token[i] = fgetc(pr);
+
+    token[size] = '\0';
+
+    if (!strcmp(token,"true"))
+        return true;
+    else if (!strcmp(token,"false"))
+        return false;
+    else
+        return -1;
+    
+}
+
+static void get_string(FILE *pr,char first,char *token)
+{
+
+    int i = 0;
+    token[i] = first;
+    i = 1;
+
+    do
+    {
+        first = fgetc(pr);
+        token[i] = first;
+        i++;
+        if (first == EOF){
+
+            free(token);
+            parse_char_error(first,pr);
+        }
+        
+
+    } while (first != '"');
+    
+    token[i] = '\0';
+}
+
+static void get_num(FILE *pr,char first,char *number,int *dot)
+{
+
+    int i = 0;    
+
+    if (isdigit(first) || first == '-')
+    {   
+        number[0] = first;
+        *dot = 0;
+        i = 1;
+
+        first = fgetc(pr);
+
+     
+        number[1] = first;
+        i++;
+        
+        while (isdigit(first))
+        {
+
+            first = fgetc(pr);
+            number[i] = first;
+            i++;
+            if (first == '.')//case float
+            {
+                *dot = 1;
+                first = fgetc(pr);
+                number[i] = first;
+                i++;
+                continue;
+            }
+        }
+        
+      
+        number[i-1] = '\0';
+
+    }
+
+}
+
+Json *json_simple_parse(Json **head_ref, FILE *pr)
 {
 
     char c = fgetc(pr);
-    char *token = malloc(5000);
-
+    char value[255];
+    for (size_t i = 0; i < 255; i++)
+    {
+        value[i] = 'a'; //*(value + i) = 'a'
+    }
+    
+    
 
     while(isspace(c))
         c = fgetc(pr);
     
     if (c == 'n') // parse null
     {
-        token[0] = c; // token[0] = 'n';
-        for (size_t i = 1; i < 4; i++)
-        {
-            token[i] = fgetc(pr);
-        }
-        token[4] ='\0';
+        get_null(pr);
         push_json_null(head_ref, NULL);
     }    
     else if(c== 't' || c== 'f')//parse boolean
     {
-        
+        bool value = get_boolean(pr, c);
 
     }else if (c == '"') // parse string
     {
-
-    }
-    else if(c == '[') // parse array
-    {
-
-    }
-    else if(c == '{')
-    {
-
+        get_string(pr, c, value);
+        push_json_string(head_ref,value, NULL);
         
-
+    }
+    else if(c == '[' || c == '{') // parse array
+    {
+        //parse_struct una func
     }
     else if(isdigit(c)) // parser number
     {
+        int dot = 0;
+        get_num(pr,c,value,&dot);
+
+        //push on json object a 
+        if (dot == 0)
+        {
+            push_json_int(head_ref, atoi(value), NULL);
+        }else
+        {
+            push_json_double(head_ref, atof(value), NULL);
+        }
+        
 
     }
 
-    free(token);
+
 
 }
