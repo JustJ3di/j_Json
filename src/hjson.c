@@ -1,21 +1,29 @@
 #include "hjson.h"
 
 
-Json  *json_init(){
 
-    Json *json = (Json *)malloc(sizeof(Json)*1000); //MAGIC NUMBER I NEED TO FIX IT
+static Json  *json_init(int type){
+
+    //select the correct size for the memory
+    size_t size;
+    Json *json;
+
+    if (type == OBJ_SIMPLE)
+        size = SIMPLE_SIZE;
+    else
+        size = INITIAL_INIT_SIZE;
+
+    json = (Json *)malloc(sizeof(Json)*size); //MAGIC NUMBER I NEED TO FIX IT
+        
     if (json == NULL) //malloc failed
-    {
-
         exit(EXIT_FAILURE);
 
-    }
     
-
     //initialize value
     json->next = NULL;
-    json->type = START; //magic number of init
+    json->type = type; //magic number of init
     json->obj_string = NULL;
+    json->key = NULL;
 
     return json;
 
@@ -168,11 +176,10 @@ void push_json_json(Json **head_ref, char *eventualy_key)
     Json *new_json = (*head_ref) + 1;
     //i need to append a memeorys'control
     
+    //alloc list
+    new_json->obj_json = malloc(sizeof(Json)*100);
+
     //start new linked list
-    new_json->obj_json = NULL;
-
-    new_json->type = OBJ_JSON;
-
 
     if (eventualy_key != NULL) //set a key if we need it!
     {
@@ -180,8 +187,10 @@ void push_json_json(Json **head_ref, char *eventualy_key)
         strcpy(new_json->key, eventualy_key);
     }
     else
-        new_json->key = NULL;
-    
+    {
+        new_json->obj_json->next = NULL;
+        new_json->obj_json->type = OBJ_ARRAY;
+    }
 
     new_json->next = (*head_ref);
 
@@ -250,7 +259,7 @@ static void get_string(FILE *pr,char first,char *token)
         if (first == EOF){
 
             free(token);
-            parse_char_error(first,pr);
+
         }
         
 
@@ -262,78 +271,103 @@ static void get_string(FILE *pr,char first,char *token)
 static void get_num(FILE *pr,char first,char *number,int *dot)
 {
 
-    int i = 0;    
+    int i;    
+ 
+    number[0] = first;
+    *dot = 0;
+    i = 1;
 
-    if (isdigit(first) || first == '-')
-    {   
-        number[0] = first;
-        *dot = 0;
-        i = 1;
+    first = fgetc(pr);
+    if(number[0] == '-' ) 
+    {//error i need to handle the error in a better way
+        if ( !isdigit(first))
+        {
+                exit(EXIT_FAILURE);    
+        }
+    }
+    
+    number[1] = first;
+    
+    i++;
+    
+    while (isdigit(first))
+    {
 
         first = fgetc(pr);
-
-     
-        number[1] = first;
+        number[i] = first;
         i++;
-        
-        while (isdigit(first))
+        if (first == '.')//case float
         {
-
+            *dot = 1;
             first = fgetc(pr);
             number[i] = first;
             i++;
-            if (first == '.')//case float
-            {
-                *dot = 1;
-                first = fgetc(pr);
-                number[i] = first;
-                i++;
-                continue;
-            }
+            continue;
         }
-        
-      
-        number[i-1] = '\0';
-
     }
+      
+    number[i-1] = '\0';
+
 
 }
 
-Json *json_simple_parse(Json **head_ref, FILE *pr)
-{
 
-    char c = fgetc(pr);
-    char value[255];
-    for (size_t i = 0; i < 255; i++)
+
+Json *json_parse(const char *filename, Json **tail){
+
+    FILE *pr;
+    Json *json;
+    char c;
+
+    pr = fopen(filename,"r");
+
+    c = fgetc(pr);
+
+    while(isspace(c) > 0)
+        c = fgetc(pr);
+    if(c == '"' || c == 'n' || c == 'f' || c == 't' || isdigit(c) > 0 || c == '-')
     {
-        value[i] = 'a'; //*(value + i) = 'a'
+        json = json_init(OBJ_SIMPLE);
+        *tail = json; // saved the tail;
+        json_parse_value(&json, pr, c);
+        
     }
     
-    
+    fclose(pr);
 
-    while(isspace(c))
-        c = fgetc(pr);
-    
+    return json;
+
+}
+
+void json_parse_value(Json **head_ref, FILE *pr, char first)
+{
+
+    char c, value[255];
+
+    c = first;
+
     if (c == 'n') // parse null
     {
         get_null(pr);
-        push_json_null(head_ref, NULL);
-    }    
-    else if(c== 't' || c== 'f')//parse boolean
+        push_json_null(head_ref,NULL);
+    } 
+    else if( c== 't' || c == 'f')//parse boolean
     {
         bool value = get_boolean(pr, c);
+        push_json_bool(head_ref, value, NULL);
 
-    }else if (c == '"') // parse string
+    }
+    else if (c == EOF)
+    {   
+        return;
+    }
+    else if (c == '"') // parse string
     {
         get_string(pr, c, value);
         push_json_string(head_ref,value, NULL);
-        
+
     }
-    else if(c == '[' || c == '{') // parse array
-    {
-        //parse_struct una func
-    }
-    else if(isdigit(c)) // parser number
+    else if(isdigit(c) || c == '-') // parser number
     {
         int dot = 0;
         get_num(pr,c,value,&dot);
@@ -347,9 +381,27 @@ Json *json_simple_parse(Json **head_ref, FILE *pr)
             push_json_double(head_ref, atof(value), NULL);
         }
         
-
     }
 
+}
+
+
+void delete_json(Json **tail,Json  **head)
+{
+
+    
+
+    if ((*tail)->type == OBJ_SIMPLE)
+    {
+        if ((*head)->type == OBJ_STRING)
+        {
+            free((*head)->obj_string);
+        }
+        
+
+        free(*tail);
+    }
+    
 
 
 }

@@ -7,6 +7,17 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
+
+#ifndef INITIAL_INIT_SIZE
+    #define INITIAL_INIT_SIZE 100
+#endif
+
+//simple size for a value object
+#ifndef SIMPLE_SIZE
+    #define SIMPLE_SIZE 2
+#endif
+
 
 enum{
     OBJ_INT,
@@ -15,14 +26,12 @@ enum{
     OBJ_JSON,
     OBJ_NULL,
     OBJ_BOOL,
-    START //STAR LINKED :)
+	OBJ_DICT,
+    OBJ_ARRAY,
+    OBJ_SIMPLE
+     //STAR LINKED :)
 };
 
-enum{
-	ARRAY,
-	SIMPLE,
-	DICT
-};
 
 typedef struct json{
 
@@ -30,16 +39,15 @@ typedef struct json{
     int type; // 8 byte
     struct json *next; //8 byte
     union{  
-        int obj_int;
+        int obj_int; //is also bool
         double obj_double;
         char *obj_string;
-        struct json *obj_json;
+        struct json *obj_json; //new head 
     };
 
 
 }Json;
 
-Json  *json_init();
 
 void push_json_int(Json **head_ref, int value, char *eventualy_key);
 
@@ -53,9 +61,16 @@ void push_json_null(Json **head_ref, char *eventualy_key);
 
 void push_json_json(Json **head_ref, char *eventualy_key);
 
-Json *json_parse(Json **head_ref, FILE *pr);
 
+Json *json_parse(const char *, Json **);
 
+void json_parse_value(Json **head_ref, FILE *pr, char first);
+
+void json_parse_array(Json **head_ref, FILE *pr);
+
+void json_parse_dict(Json **head_ref, FILE *pr);
+
+void delete_json(Json **, Json **);
 
 
 
