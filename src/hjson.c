@@ -1,6 +1,17 @@
 #include "hjson.h"
 
-
+	int fgect2(FILE *pr,int line,const char *fun)
+	{
+		char c = fgetc(pr);
+		if (isspace(c)==0)
+		{
+			printf("(%c) trovato in fun (%s) alla line %d \n",c,fun,line);
+		}
+		return c;
+	
+	}
+	
+#define fgetc(ch) fgect2(ch,__LINE__,__func__);
 
 static Json  *json_init(int type){
 
@@ -244,27 +255,21 @@ static bool get_boolean(FILE *pr, char first) //first is the first char to parse
     
 }
 
-static void get_string(FILE *pr,char first,char *token)
+static void get_string(FILE *pr,char *first,char *token)
 {
 
     int i = 0;
-    token[i] = first;
+    token[i] = *first;
     i = 1;
 
     do
     {
-        first = fgetc(pr);
-        token[i] = first;
+        *first = fgetc(pr);
+        token[i] = *first;
         i++;
-        if (first == EOF){
 
-            free(token);
+    }while (*first != '"');
 
-        }
-        
-
-    } while (first != '"');
-    
     token[i] = '\0';
 }
 
@@ -326,18 +331,20 @@ Json *json_parse(const char *filename, Json **tail){
 
     while(isspace(c) > 0)
         c = fgetc(pr);
+
     if(c == '"' || c == 'n' || c == 'f' || c == 't' || isdigit(c) > 0 || c == '-')
     {
+
         json = json_init(OBJ_SIMPLE);
         *tail = json;
         json_parse_value(&json, pr, c);
 
     }else if (c == '[')
     {
+        
         json = json_init(OBJ_ARRAY);
         *tail = json;
         json_parse_array(&json, pr);
-
 
     }
     
@@ -351,7 +358,7 @@ Json *json_parse(const char *filename, Json **tail){
 void json_parse_value(Json **head_ref, FILE *pr, char first)
 {
 
-   char c, value[255];
+    char c, value[255];
 
     c = first;
 
@@ -372,15 +379,16 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
     }
     else if (c == '"') // parse string
     {
-        get_string(pr, c, value);
-        push_json_string(head_ref,value, NULL);
+        get_string(pr, &c, value);
+        push_json_string(head_ref, value, NULL);
 
     }
     else if(isdigit(c) || c == '-') // parser number
     {
         printf("ciao\n");
         int dot = 0;
-        get_num(pr,&c,value,&dot);
+
+        get_num(pr,&c, value, &dot);
 
         //push on json object a 
         if (dot == 0)
@@ -395,29 +403,43 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
 
 }
 
-
+    #include<unistd.h>
 void json_parse_array(Json **head_ref, FILE *pr)
 {
 
-    char c, value[255];
+    char c = '\0'; 
+    char value[255];
     
-    c = '[';
 
     while (c != ']')
     {
+
+        c = fgetc(pr);
+
         while(isspace(c))
             c = fgetc(pr);
-    
+        
+        
+
+        if (c == ']'|| c== EOF)
+        {   
+            return;
+        }
+        if (c == ',')
+            continue;
+
+
+        sleep(1);  
 
         if (c == 'n') // parse null
         {
             get_null(pr);
-            push_json_null(head_ref,NULL);
+            push_json_null(head_ref, NULL);
             
         } 
         else if (c == '"') // parse string
         {
-            get_string(pr, c, value);
+            get_string(pr, &c, value);
             push_json_string(head_ref,value, NULL);
         }
         else if( c== 't' || c == 'f')//parse boolean
@@ -429,7 +451,7 @@ void json_parse_array(Json **head_ref, FILE *pr)
         else if(isdigit(c) || c == '-') // parser number
         {
             int dot = 0;
-            get_num(pr,&c,value,&dot);
+            get_num(pr, &c , value ,&dot);
 
             //push on json object a 
             if (dot == 0)
@@ -441,18 +463,13 @@ void json_parse_array(Json **head_ref, FILE *pr)
             }
             
         }
-        else if('[')
+        else if(c == '[')
         {
-
-            json_parse_array((*head_ref)->obj_json, pr);
+            (*head_ref)->obj_json = json_init(OBJ_ARRAY);
+            json_parse_array(&(*head_ref)->obj_json, pr);
             
-
         }
-        if (c == ']'|| c== EOF)
-            return;
-
-        c = fgetc(pr);
-
+        
 
     }
 
