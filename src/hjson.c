@@ -290,12 +290,8 @@ static void get_num(FILE *pr,char *first,char *number,int *dot)
     
     i++;
     
-    while (isdigit(*first))
+    while (isdigit(*first) || *first == '.')
     {
-
-        *first = fgetc(pr);
-        number[i] = *first;
-        i++;
         if (*first == '.')//case float
         {
             *dot = 1;
@@ -304,22 +300,24 @@ static void get_num(FILE *pr,char *first,char *number,int *dot)
             i++;
             continue;
         }
+
+        *first = fgetc(pr);
+        number[i] = *first;
+        i++;
+
     }
       
+    
     number[i-1] = '\0';
 
 
 }
 
-static void align_head_tail(Json **head,Json **tail)
-{
-    *tail = *head;
-}
 
 Json *json_parse(const char *filename, Json **tail){
 
     FILE *pr;
-    Json *json;
+    Json *json = NULL;
     char c;
 
     pr = fopen(filename,"r");
@@ -331,16 +329,15 @@ Json *json_parse(const char *filename, Json **tail){
     if(c == '"' || c == 'n' || c == 'f' || c == 't' || isdigit(c) > 0 || c == '-')
     {
         json = json_init(OBJ_SIMPLE);
-        align_head_tail(&json, tail);
+        *tail = json;
         json_parse_value(&json, pr, c);
 
     }else if (c == '[')
     {
         json = json_init(OBJ_ARRAY);
-        align_head_tail(&json, tail);
-        //json_parse_array(&json, pr);
-        push_json_int(&json,12,NULL);
-        push_json_double(&json ,12.3,NULL);
+        *tail = json;
+        json_parse_array(&json, pr);
+
 
     }
     
@@ -381,6 +378,7 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
     }
     else if(isdigit(c) || c == '-') // parser number
     {
+        printf("ciao\n");
         int dot = 0;
         get_num(pr,&c,value,&dot);
 
@@ -402,17 +400,11 @@ void json_parse_array(Json **head_ref, FILE *pr)
 {
 
     char c, value[255];
-
-    bool new_value = true;
-
+    
     c = '[';
-
-    return;
 
     while (c != ']')
     {
-        printf("###%c\n",c);
-
         while(isspace(c))
             c = fgetc(pr);
     
@@ -449,7 +441,13 @@ void json_parse_array(Json **head_ref, FILE *pr)
             }
             
         }
-    
+        else if('[')
+        {
+
+            json_parse_array((*head_ref)->obj_json, pr);
+            
+
+        }
         if (c == ']'|| c== EOF)
             return;
 
