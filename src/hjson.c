@@ -268,39 +268,39 @@ static void get_string(FILE *pr,char first,char *token)
     token[i] = '\0';
 }
 
-static void get_num(FILE *pr,char first,char *number,int *dot)
+static void get_num(FILE *pr,char *first,char *number,int *dot)
 {
 
     int i;    
  
-    number[0] = first;
+    number[0] = *first;
     *dot = 0;
     i = 1;
 
-    first = fgetc(pr);
+    *first = fgetc(pr);
     if(number[0] == '-' ) 
     {//error i need to handle the error in a better way
-        if ( !isdigit(first))
+        if ( !isdigit(*first))
         {
                 exit(EXIT_FAILURE);    
         }
     }
     
-    number[1] = first;
+    number[1] = *first;
     
     i++;
     
-    while (isdigit(first))
+    while (isdigit(*first))
     {
 
-        first = fgetc(pr);
-        number[i] = first;
+        *first = fgetc(pr);
+        number[i] = *first;
         i++;
-        if (first == '.')//case float
+        if (*first == '.')//case float
         {
             *dot = 1;
-            first = fgetc(pr);
-            number[i] = first;
+            *first = fgetc(pr);
+            number[i] = *first;
             i++;
             continue;
         }
@@ -311,7 +311,10 @@ static void get_num(FILE *pr,char first,char *number,int *dot)
 
 }
 
-
+static void align_head_tail(Json **head,Json **tail)
+{
+    *tail = *head;
+}
 
 Json *json_parse(const char *filename, Json **tail){
 
@@ -328,10 +331,19 @@ Json *json_parse(const char *filename, Json **tail){
     if(c == '"' || c == 'n' || c == 'f' || c == 't' || isdigit(c) > 0 || c == '-')
     {
         json = json_init(OBJ_SIMPLE);
-        *tail = json; // saved the tail;
+        align_head_tail(&json, tail);
         json_parse_value(&json, pr, c);
-        
+
+    }else if (c == '[')
+    {
+        json = json_init(OBJ_ARRAY);
+        align_head_tail(&json, tail);
+        //json_parse_array(&json, pr);
+        push_json_int(&json,12,NULL);
+        push_json_double(&json ,12.3,NULL);
+
     }
+    
     
     fclose(pr);
 
@@ -342,7 +354,7 @@ Json *json_parse(const char *filename, Json **tail){
 void json_parse_value(Json **head_ref, FILE *pr, char first)
 {
 
-    char c, value[255];
+   char c, value[255];
 
     c = first;
 
@@ -370,7 +382,7 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
     else if(isdigit(c) || c == '-') // parser number
     {
         int dot = 0;
-        get_num(pr,c,value,&dot);
+        get_num(pr,&c,value,&dot);
 
         //push on json object a 
         if (dot == 0)
@@ -386,10 +398,71 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
 }
 
 
-void delete_json(Json **tail,Json  **head)
+void json_parse_array(Json **head_ref, FILE *pr)
 {
 
+    char c, value[255];
+
+    bool new_value = true;
+
+    c = '[';
+
+    return;
+
+    while (c != ']')
+    {
+        printf("###%c\n",c);
+
+        while(isspace(c))
+            c = fgetc(pr);
     
+
+        if (c == 'n') // parse null
+        {
+            get_null(pr);
+            push_json_null(head_ref,NULL);
+            
+        } 
+        else if (c == '"') // parse string
+        {
+            get_string(pr, c, value);
+            push_json_string(head_ref,value, NULL);
+        }
+        else if( c== 't' || c == 'f')//parse boolean
+        {
+            bool value = get_boolean(pr, c);
+            push_json_bool(head_ref, value, NULL);
+
+        }
+        else if(isdigit(c) || c == '-') // parser number
+        {
+            int dot = 0;
+            get_num(pr,&c,value,&dot);
+
+            //push on json object a 
+            if (dot == 0)
+            {
+                push_json_int(head_ref, atoi(value), NULL);
+            }else
+            {
+                push_json_double(head_ref, atof(value), NULL);
+            }
+            
+        }
+    
+        if (c == ']'|| c== EOF)
+            return;
+
+        c = fgetc(pr);
+
+
+    }
+
+
+}
+
+void delete_json(Json **tail,Json  **head)
+{
 
     if ((*tail)->type == OBJ_SIMPLE)
     {
@@ -398,9 +471,26 @@ void delete_json(Json **tail,Json  **head)
             free((*head)->obj_string);
         }
         
+        free(*tail);
+    }else if ((*tail)->type == OBJ_ARRAY)
+    {
+        while(*head)
+        {
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }
+            else if ((*head)->type == OBJ_ARRAY)
+            {
+                free((*head)->obj_json);
+            }
+            
+            (*head) = (*head)->next;
+        }   
 
         free(*tail);
     }
+    
     
 
 

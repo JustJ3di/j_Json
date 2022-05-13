@@ -3,7 +3,6 @@
 int main()
 {
 
-
     Json *tail  = NULL;
 
     Json *head = json_parse("prova.json" , &tail);
@@ -11,8 +10,6 @@ int main()
     assert(head != tail); //beacause the ara always a push on the linked  
 
     printf("%f \n",head->obj_double);
-
-
 
     delete_json(&tail, &head);
 

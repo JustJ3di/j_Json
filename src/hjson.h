@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <assert.h>
 
+//initial size for the list or the dict(object)
 #ifndef INITIAL_INIT_SIZE
     #define INITIAL_INIT_SIZE 100
 #endif
@@ -17,6 +18,8 @@
 #ifndef SIMPLE_SIZE
     #define SIMPLE_SIZE 2
 #endif
+
+
 
 
 enum{
