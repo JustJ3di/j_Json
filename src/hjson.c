@@ -13,6 +13,11 @@
 	
 #define fgetc(ch) fgect2(ch,__LINE__,__func__);
 
+static Json *newalloc(Json **json)
+{
+    return (*json) + 1;
+}
+
 static Json  *json_init(int type){
 
     //select the correct size for the memory
@@ -94,7 +99,7 @@ void push_json_double(Json **head_ref, double value, char *eventualy_key)
 void push_json_string(Json **head_ref, char *value, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newalloc(head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -130,7 +135,7 @@ void push_json_string(Json **head_ref, char *value, char *eventualy_key)
 void push_json_bool(Json **head_ref, bool value, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newalloc(head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -157,7 +162,7 @@ void push_json_bool(Json **head_ref, bool value, char *eventualy_key)
 void push_json_null(Json **head_ref, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newalloc(head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -184,7 +189,7 @@ void push_json_null(Json **head_ref, char *eventualy_key)
 void push_json_json(Json **head_ref, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newalloc;
     //i need to append a memeorys'control
     
     //alloc list
@@ -228,15 +233,15 @@ static void get_null(FILE *pr){
 
 }
 
-static bool get_boolean(FILE *pr, char first) //first is the first char to parse
+static bool get_boolean(FILE *pr, char *first) //first is the first char to parse
 {
     size_t size;
 
     char token[6];
 
-    token[0] = first;
+    token[0] = *first;
 
-    if (first == 't')
+    if (*first == 't')
         size = 4;
     else
         size = 5;
@@ -337,17 +342,16 @@ Json *json_parse(const char *filename, Json **tail){
 
         json = json_init(OBJ_SIMPLE);
         *tail = json;
-        json_parse_value(&json, pr, c);
+        json =  json_parse_value(&json, pr, &c);
 
     }else if (c == '[')
     {
         
         json = json_init(OBJ_ARRAY);
         *tail = json;
-        json_parse_array(&json, pr);
+        json = json_parse_array(&json, pr);
 
     }
-    
     
     fclose(pr);
 
@@ -355,40 +359,38 @@ Json *json_parse(const char *filename, Json **tail){
 
 }
 
-void json_parse_value(Json **head_ref, FILE *pr, char first)
+Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
 {
 
-    char c, value[255];
+    char  value[255];
 
-    c = first;
 
-    if (c == 'n') // parse null
+    if (*first == 'n') // parse null
     {
-        get_null(pr);
+        //get_null(pr);
         push_json_null(head_ref,NULL);
     } 
-    else if( c== 't' || c == 'f')//parse boolean
+    else if( *first == 't' || *first == 'f')//parse boolean
     {
-        bool value = get_boolean(pr, c);
+        bool value = get_boolean(pr, first);
         push_json_bool(head_ref, value, NULL);
 
     }
-    else if (c == EOF)
+    else if (*first == EOF)
     {   
-        return;
+        return (*head_ref);
     }
-    else if (c == '"') // parse string
+    else if (*first == '"') // parse string
     {
-        get_string(pr, &c, value);
+        get_string(pr, first, value);
         push_json_string(head_ref, value, NULL);
 
     }
-    else if(isdigit(c) || c == '-') // parser number
+    else if(isdigit(*first) || *first == '-') // parser number
     {
-        printf("ciao\n");
         int dot = 0;
 
-        get_num(pr,&c, value, &dot);
+        get_num(pr, first, value, &dot);
 
         //push on json object a 
         if (dot == 0)
@@ -401,15 +403,16 @@ void json_parse_value(Json **head_ref, FILE *pr, char first)
         
     }
 
+    return (*head_ref);
+
 }
 
+
     #include<unistd.h>
-void json_parse_array(Json **head_ref, FILE *pr)
+Json *json_parse_array(Json **head_ref, FILE *pr)
 {
 
-    char c = '\0'; 
-    char value[255];
-    
+    char c = '\0';     
 
     while (c != ']')
     {
@@ -423,7 +426,7 @@ void json_parse_array(Json **head_ref, FILE *pr)
 
         if (c == ']'|| c== EOF)
         {   
-            return;
+            return (*head_ref);
         }
         if (c == ',')
             continue;
@@ -431,48 +434,31 @@ void json_parse_array(Json **head_ref, FILE *pr)
 
         sleep(1);  
 
-        if (c == 'n') // parse null
+        if (c == 'n' || c == 't' || c == '"' || c =='f' || (isdigit(c))|| c == '-') // parse null
         {
-            get_null(pr);
-            push_json_null(head_ref, NULL);
+
+            (*head_ref) = json_parse_value(head_ref, pr, &c);
             
         } 
-        else if (c == '"') // parse string
-        {
-            get_string(pr, &c, value);
-            push_json_string(head_ref,value, NULL);
-        }
-        else if( c== 't' || c == 'f')//parse boolean
-        {
-            bool value = get_boolean(pr, c);
-            push_json_bool(head_ref, value, NULL);
-
-        }
-        else if(isdigit(c) || c == '-') // parser number
-        {
-            int dot = 0;
-            get_num(pr, &c , value ,&dot);
-
-            //push on json object a 
-            if (dot == 0)
-            {
-                push_json_int(head_ref, atoi(value), NULL);
-            }else
-            {
-                push_json_double(head_ref, atof(value), NULL);
-            }
-            
-        }
         else if(c == '[')
         {
-            (*head_ref)->obj_json = json_init(OBJ_ARRAY);
-            json_parse_array(&(*head_ref)->obj_json, pr);
+
+
+                (*head_ref)->obj_json = malloc(sizeof(Json)*100);
+                (*head_ref)->obj_json->next = NULL;
+                (*head_ref)->obj_json->key = NULL;
+                (*head_ref)->obj_json->type = OBJ_ARRAY;
+
+            (*head_ref)->obj_json =  json_parse_array(&(*head_ref)->obj_json, pr);
+            
+            
             
         }
         
 
     }
 
+    return (*head_ref);
 
 }
 

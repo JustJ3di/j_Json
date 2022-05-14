@@ -9,7 +9,18 @@ int main()
 
     assert(head != tail); //beacause the ara always a push on the linked  
 
-    printf("%s \n",head->obj_string);
+    Json *curr = head;
+
+    printf("(%s)\n", head->obj_string);
+
+    while(curr)
+    {
+
+        printf("%d \n",curr->type);
+        (curr) = curr->next;
+    }
+    
+    
 
     delete_json(&tail, &head);
 
