@@ -60,7 +60,7 @@ void push_json_null(Json **head_ref, char *eventualy_key);
 void push_json_json(Json **head_ref, char *eventualy_key);
 
 Json *json_parse(const char *, Json **);
-Json *json_parse_value(Json **head_ref, FILE *pr, char *first);
+Json *json_parse_value(Json **head_ref, FILE *pr, char *first, char *key);
 Json *json_parse_array(Json **head_ref, FILE *pr);
 Json *json_parse_dict(Json **head_ref, FILE *pr);
 void delete_json(Json **, Json **);

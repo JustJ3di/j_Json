@@ -48,7 +48,7 @@ static Json  *json_init(int type){
 void push_json_int(Json **head_ref, int value, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newalloc(head_ref);
     //i need to append a memeorys'control
     
     //set the value
@@ -342,14 +342,23 @@ Json *json_parse(const char *filename, Json **tail){
 
         json = json_init(OBJ_SIMPLE);
         *tail = json;
-        json =  json_parse_value(&json, pr, &c);
+        json =  json_parse_value(&json, pr, &c, NULL);
 
-    }else if (c == '[')
+    }
+    else if (c == '[')
     {
         
         json = json_init(OBJ_ARRAY);
         *tail = json;
         json = json_parse_array(&json, pr);
+
+    }
+    else if(c == '{')
+    {
+
+        json = json_init(OBJ_DICT);
+        *tail = json;
+        json = json_parse_dict(&json, pr);
 
     }
     
@@ -359,7 +368,7 @@ Json *json_parse(const char *filename, Json **tail){
 
 }
 
-Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
+Json *json_parse_value(Json **head_ref, FILE *pr, char *first, char *key)
 {
 
     char  value[255];
@@ -368,12 +377,12 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
     if (*first == 'n') // parse null
     {
         get_null(pr, first);
-        push_json_null(head_ref,NULL);
+        push_json_null(head_ref, key);
     } 
     else if( *first == 't' || *first == 'f')//parse boolean
     {
         bool value = get_boolean(pr, first);
-        push_json_bool(head_ref, value, NULL);
+        push_json_bool(head_ref, value, key);
 
     }
     else if (*first == EOF)
@@ -383,7 +392,7 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
     else if (*first == '"') // parse string
     {
         get_string(pr, first, value);
-        push_json_string(head_ref, value, NULL);
+        push_json_string(head_ref, value, key);
 
     }
     else if(isdigit(*first) || *first == '-') // parser number
@@ -395,10 +404,10 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
         //push on json object a 
         if (dot == 0)
         {
-            push_json_int(head_ref, atoi(value), NULL);
+            push_json_int(head_ref, atoi(value), key);
         }else
         {
-            push_json_double(head_ref, atof(value), NULL);
+            push_json_double(head_ref, atof(value), key);
         }
         
     }
@@ -435,24 +444,11 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
         if (c == 'n' || c == 't' || c == '"' || c =='f' || (isdigit(c))|| c == '-') // parse null
         {
 
-            (*head_ref) = json_parse_value(head_ref, pr, &c);
+            (*head_ref) = json_parse_value(head_ref, pr, &c , NULL);
             
         } 
         else if(c == '[')
         {
-            Json *new = newalloc(head_ref);
-            new->type = OBJ_ARRAY;
-            new->obj_json = malloc(sizeof(Json)*100);
-            new->obj_json->next = NULL;
-            new->key = NULL;
-            new->obj_json->type = OBJ_ARRAY;
-            (new)->next = (*head_ref);
-            new =  json_parse_array(&(*head_ref)->obj_json, pr);
-            
-            while(new->type != OBJ_ARRAY)
-                new = new->next;
-                
-            (*head_ref) = new;
 
             
             
@@ -462,6 +458,71 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
     }
 
     return (*head_ref);
+
+}
+
+
+Json *json_parse_dict(Json **head_ref, FILE *pr){
+
+    char c = '\0';    
+
+    bool value = false; 
+
+    char key[128];
+
+    while (c != '}')
+    {
+        c = fgetc(pr);
+
+        while(isspace(c))
+            c = fgetc(pr);
+         
+        if (c == '}'|| c== EOF)
+        {   
+            return (*head_ref);
+        }
+        if (c == ',')
+        {
+            value = false;
+            continue;
+        }
+
+
+
+        sleep(1);  
+
+        if (value == true 
+        && (c == 'n' 
+        || c == 't' 
+        || c == '"' 
+        || c =='f' 
+        || (isdigit(c))
+        || c == '-')) // parse null
+        {
+            printf("key0 (%s)\n", key);
+            (*head_ref) = json_parse_value(head_ref, pr, &c , key);
+            value = false;
+            
+        } 
+        else if(c == '"' && value == false) //find key
+        {
+            get_string(pr, &c, key);
+
+            value = true;
+
+        }
+        else if(c == '[')
+        {
+
+        
+            
+        }
+        
+
+    }
+
+    return (*head_ref);  
+
 
 }
 
@@ -493,6 +554,26 @@ void delete_json(Json **tail,Json  **head)
                 free((*head)->obj_json);
             }
             
+            (*head) = (*head)->next;
+        }   
+
+        free(*tail);
+    }
+    else if((*tail)->type == OBJ_DICT)
+    {
+        while(*head)
+        {
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }
+            else if ((*head)->type == OBJ_ARRAY)
+            {   
+                
+                free((*head)->obj_json);
+            }
+            
+            free((*head)->key);
             (*head) = (*head)->next;
         }   
 
