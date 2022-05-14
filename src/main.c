@@ -2,12 +2,13 @@
 #include "hejson.h"
 
 int main()
-{
-    Json *new = Json_parse("prova.json");
+{   
+    Json *tail = NULL;
+    Json *new = json_parse("prova.json", &tail);
+
+    printf("%d,\n",new->next->obj_int);
 
     //printf("(%s), (%d)\n",new->new_dict->new_head->key, new->new_dict->new_head->element.obj_integer);
-    
-    print_json(&new);
     
     //printf("\n");
 
@@ -29,7 +30,7 @@ int main()
     printf("ciao\n");
 */
 
-    dealloc(&new);
+    
 
  
 

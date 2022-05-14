@@ -189,7 +189,7 @@ void push_json_null(Json **head_ref, char *eventualy_key)
 void push_json_json(Json **head_ref, char *eventualy_key)
 {
 
-    Json *new_json = newalloc;
+    Json *new_json = newalloc(head_ref);
     //i need to append a memeorys'control
     
     //alloc list
@@ -204,8 +204,8 @@ void push_json_json(Json **head_ref, char *eventualy_key)
     }
     else
     {
+        new_json->type = OBJ_ARRAY;
         new_json->obj_json->next = NULL;
-        new_json->obj_json->type = OBJ_ARRAY;
     }
 
     new_json->next = (*head_ref);
@@ -214,22 +214,22 @@ void push_json_json(Json **head_ref, char *eventualy_key)
 
 }
 
-static void get_null(FILE *pr){
+static void get_null(FILE *pr, char *first){
 
     char token[10000];
-    token[0] = 'n';
+    token[0] = *first;
     for (size_t i = 1; i < 4; i++)
     {
-        token[i] = fgetc(pr);
+        *first = fgetc(pr);
+        token[i] = *first;
     }
     token[4] ='\0';
     if (strcmp("null",token))
     {
         printf("Error null value not found\n");
-        
+        exit(1);        
     }
 
-    return;
 
 }
 
@@ -367,7 +367,7 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first)
 
     if (*first == 'n') // parse null
     {
-        //get_null(pr);
+        get_null(pr, first);
         push_json_null(head_ref,NULL);
     } 
     else if( *first == 't' || *first == 'f')//parse boolean
@@ -416,21 +416,19 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
 
     while (c != ']')
     {
-
         c = fgetc(pr);
 
         while(isspace(c))
             c = fgetc(pr);
-        
-        
-
+         
         if (c == ']'|| c== EOF)
         {   
             return (*head_ref);
         }
         if (c == ',')
+        {
             continue;
-
+        }
 
         sleep(1);  
 
@@ -442,15 +440,20 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
         } 
         else if(c == '[')
         {
-
-
-                (*head_ref)->obj_json = malloc(sizeof(Json)*100);
-                (*head_ref)->obj_json->next = NULL;
-                (*head_ref)->obj_json->key = NULL;
-                (*head_ref)->obj_json->type = OBJ_ARRAY;
-
-            (*head_ref)->obj_json =  json_parse_array(&(*head_ref)->obj_json, pr);
+            Json *new = newalloc(head_ref);
+            new->type = OBJ_ARRAY;
+            new->obj_json = malloc(sizeof(Json)*100);
+            new->obj_json->next = NULL;
+            new->key = NULL;
+            new->obj_json->type = OBJ_ARRAY;
+            (new)->next = (*head_ref);
+            new =  json_parse_array(&(*head_ref)->obj_json, pr);
             
+            while(new->type != OBJ_ARRAY)
+                new = new->next;
+                
+            (*head_ref) = new;
+
             
             
         }
@@ -461,6 +464,9 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
     return (*head_ref);
 
 }
+
+
+
 
 void delete_json(Json **tail,Json  **head)
 {
@@ -482,7 +488,8 @@ void delete_json(Json **tail,Json  **head)
                 free((*head)->obj_string);
             }
             else if ((*head)->type == OBJ_ARRAY)
-            {
+            {   
+                
                 free((*head)->obj_json);
             }
             

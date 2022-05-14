@@ -10,7 +10,7 @@
 #define DEBUG 1
 
 //DEFINE THE BOOLEAN TYPE:
-typedef enum {false,true}boolean;
+#include <stdbool.h>
 /*
 	I define the standard errors that a json parser can give me
 */
@@ -43,121 +43,50 @@ typedef enum {false,true}boolean;
 */
 
 //type simple object
-typedef enum{
+enum{
+    OBJ_INT,
+    OBJ_DOUBLE,
+    OBJ_STRING,
+    OBJ_JSON,
+    OBJ_NULL,
+    OBJ_BOOL,
+	OBJ_DICT,
+    OBJ_ARRAY,
+    OBJ_SIMPLE
+     //STAR LINKED :)
+};
 
-	INT,
-	STRING,
-	NULL_,
-	BOOL,
-	DOUBLE
 
-}type_simple;
-//type of generic object json
-typedef enum{
-
-	ARRAY,
-	SIMPLE,
-	DICT
-
-}type_object;
-
-//struct for the simple object
-typedef struct{
-
-	//type of the simple object (INT,STRING,NULL,DOUBLE)
-	type_simple type;
-
-	union{
-		int obj_integer;
-		char *obj_string;
-		double obj_double;
-		boolean obj_bool;
-	};
-	
-}simple_obj;
-
-//the array_object is doubled linked list of simple_object
-typedef struct array_obj{
-
-	type_object type;
-
-	union{
-		simple_obj element;
-		struct array_obj *new_head;
-		struct dict_obj *new_dict_head;
-	};
-	struct array_obj *next_element;
-	struct array_obj *previous_element;
-
-}Array;
-
-//the dict_object is like array object but there is also a key
-typedef struct dict_obj{
-
-	type_object type;
-
-	union{
-		simple_obj element;
-		Array *new_array;
-		struct dict_obj *new_head;
-	};
-	
-	struct dict_obj *next_element;
-	struct dict_obj *previous_element;
-
-	char key[];
-
-}Dict;
-
-//DEFINE THE ROOT OBJECT ! the parser working only with this !
 typedef struct json{
 
-	int type;
-	
-	union{
+    char *key; // key for the dict object
+    int type; // 8 byte
+    struct json *next; //8 byte
+    union{  
+        int obj_int; //is also bool
+        double obj_double;
+        char *obj_string;
+        struct json *obj_json; //new head 
+    };
 
-		simple_obj new_simple_object;
-		struct array_obj *new_array;
-		struct dict_obj *new_dict;
-
-	};
 
 }Json;
 
-//alloc json type simple
-Json *alloc_simple(int type);
-//alloc array or dict
-Json *alloc_struct_object(int type);
+
+void push_json_int(Json **head_ref, int value, char *eventualy_key);
+void push_json_double(Json **head_ref, double value, char *eventualy_key);
+void push_json_string(Json **head_ref, char *value, char *eventualy_key);
+void push_json_bool(Json **head_ref, bool value, char *eventualy_key);
+void push_json_null(Json **head_ref, char *eventualy_key);
+void push_json_json(Json **head_ref, char *eventualy_key);
+
+Json *json_parse(const char *, Json **);
+Json *json_parse_value(Json **head_ref, FILE *pr, char *first);
+Json *json_parse_array(Json **head_ref, FILE *pr);
+Json *json_parse_dict(Json **head_ref, FILE *pr);
+void delete_json(Json **, Json **);
 
 
-//METHOD FOR THE DICT OBJECT
-Dict *push_on_dict_a_simple(Dict **head_dict , void *value , const char *key , int type);
-Dict *push_on_dict_struct(Dict **head_dict , const char * key,int type);
 
-//METHOD FOR THE ARRAY OBJECT
-Array *push_on_array_simple(Array **head_array , void *value , int type);
-Array *push_on_array_a_struct(Array **head_array, int type);
-
-
-//generic push;
-void json_push_object_on_object(Json ** , int type_object , int type_simple , void *);
-
-
-//DEALLOC OF JSON OBJECT
-void dealloc(Json **);
-
-//dealloc of dict object
-void dealloc_dict(Dict **json_head_ref);
-
-//dealloc of array object
-void dealloc_array(Array **json_head_ref);
-
-Json *Json_parse(const char *filename);
-
-Json *parse_object(FILE *pr);
-
-int Json_dump(FILE *pr,Json **);
-
-void print_json(Json **);
 
 #endif
