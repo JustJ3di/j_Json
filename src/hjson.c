@@ -13,10 +13,10 @@
 	
 #define fgetc(ch) fgect2(ch,__LINE__,__func__);
 
-static Json *newalloc(Json **json)
-{
-    return (*json) + 1;
-}
+
+#define newnodo(pointer) {pointer + 1};
+
+
 
 static Json  *json_init(int type){
 
@@ -30,7 +30,7 @@ static Json  *json_init(int type){
         size = INITIAL_INIT_SIZE;
 
     json = (Json *)malloc(sizeof(Json)*size); //MAGIC NUMBER I NEED TO FIX IT
-        
+    
     if (json == NULL) //malloc failed
         exit(EXIT_FAILURE);
 
@@ -48,7 +48,7 @@ static Json  *json_init(int type){
 void push_json_int(Json **head_ref, int value, char *eventualy_key)
 {
 
-    Json *new_json = newalloc(head_ref);
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //set the value
@@ -73,7 +73,7 @@ void push_json_int(Json **head_ref, int value, char *eventualy_key)
 void push_json_double(Json **head_ref, double value, char *eventualy_key)
 {
 
-    Json *new_json = (*head_ref) + 1;
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -99,7 +99,7 @@ void push_json_double(Json **head_ref, double value, char *eventualy_key)
 void push_json_string(Json **head_ref, char *value, char *eventualy_key)
 {
 
-    Json *new_json = newalloc(head_ref);
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -135,7 +135,7 @@ void push_json_string(Json **head_ref, char *value, char *eventualy_key)
 void push_json_bool(Json **head_ref, bool value, char *eventualy_key)
 {
 
-    Json *new_json = newalloc(head_ref);
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -162,7 +162,7 @@ void push_json_bool(Json **head_ref, bool value, char *eventualy_key)
 void push_json_null(Json **head_ref, char *eventualy_key)
 {
 
-    Json *new_json = newalloc(head_ref);
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //set_the value
@@ -189,11 +189,11 @@ void push_json_null(Json **head_ref, char *eventualy_key)
 void push_json_json(Json **head_ref, char *eventualy_key)
 {
 
-    Json *new_json = newalloc(head_ref);
+    Json *new_json = newnodo(*head_ref);
     //i need to append a memeorys'control
     
     //alloc list
-    new_json->obj_json = malloc(sizeof(Json)*100);
+    new_json->obj_json = malloc(sizeof(Json)*INITIAL_INIT_SIZE);
 
     //start new linked list
 
@@ -202,12 +202,12 @@ void push_json_json(Json **head_ref, char *eventualy_key)
         new_json->key = (char *)malloc(strlen(eventualy_key) + 1);
         strcpy(new_json->key, eventualy_key);
     }
-    else
+    else  //push array.
     {
         new_json->type = OBJ_ARRAY;
         new_json->obj_json->next = NULL;
     }
-
+   
     new_json->next = (*head_ref);
 
     (*head_ref) = new_json;
@@ -417,11 +417,11 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first, char *key)
 }
 
 
-    #include<unistd.h>
-Json *json_parse_array(Json **head_ref, FILE *pr)
+Json *json_parse_array(Json **head_ref, FILE *pr )
 {
 
-    char c = '\0';     
+    char c = '\0';    
+
 
     while (c != ']')
     {
@@ -439,8 +439,6 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
             continue;
         }
 
-        sleep(1);  
-
         if (c == 'n' || c == 't' || c == '"' || c =='f' || (isdigit(c))|| c == '-') // parse null
         {
 
@@ -450,9 +448,19 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
         else if(c == '[')
         {
 
+            push_json_json(head_ref, NULL);
             
+            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);
+            
+           
             
         }
+	else if(c == '{')
+	{
+	   push_json_json(head_ref, NULL);
+	   (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
+
+	}
         
 
     }
@@ -462,7 +470,7 @@ Json *json_parse_array(Json **head_ref, FILE *pr)
 }
 
 
-Json *json_parse_dict(Json **head_ref, FILE *pr){
+Json *json_parse_dict(Json **head_ref, FILE *pr ){
 
     char c = '\0';    
 
@@ -488,9 +496,6 @@ Json *json_parse_dict(Json **head_ref, FILE *pr){
         }
 
 
-
-        sleep(1);  
-
         if (value == true 
         && (c == 'n' 
         || c == 't' 
@@ -504,8 +509,9 @@ Json *json_parse_dict(Json **head_ref, FILE *pr){
             value = false;
             
         } 
-        else if(c == '"' && value == false) //find key
-        {
+        else if(c == '"' 
+	&& value == false) //find key
+       	{
             get_string(pr, &c, key);
 
             value = true;
@@ -513,9 +519,15 @@ Json *json_parse_dict(Json **head_ref, FILE *pr){
         }
         else if(c == '[')
         {
+            push_json_json(head_ref, key);
 
-        
+            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);
             
+        }else if(c== '{')
+        {
+            push_json_json(head_ref, key);
+            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);
+        
         }
         
 

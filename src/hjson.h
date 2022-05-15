@@ -9,17 +9,26 @@
 #include <ctype.h>
 #include <assert.h>
 
-//initial size for the list or the dict(object)
-#ifndef INITIAL_INIT_SIZE
-    #define INITIAL_INIT_SIZE 100
-#endif
 
 //simple size for a value object
 #ifndef SIMPLE_SIZE
     #define SIMPLE_SIZE 2
 #endif
 
+//initial size for the list or the dict(object)
+#ifndef INITIAL_INIT_SIZE
+    #define INITIAL_INIT_SIZE 200
+#endif
 
+#ifndef INIT_SIZE_2
+    #define INIT_SIZE_2 400 
+#endif
+
+#ifndef INIT_SIZE_3
+    #define INIT_SIZE_3 800
+#endif
+
+#define max(x,y){x > y ? true, false}
 
 
 enum{
