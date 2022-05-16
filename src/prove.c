@@ -8,7 +8,7 @@ int main()
     Json *head = json_parse("prova.json" , &tail);
 
     assert(head != tail); //beacause the is  at least one  push on the linked.  
-    printf("%d\n",head->size);
+    printf("%d\n",get_size(&head));
     Json *curr = head;
 
     //printf("(%s)\n", head->obj_string);
