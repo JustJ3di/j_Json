@@ -1,7 +1,5 @@
 .vscode
-test
 prova
 hejson.*
-build.sh
 prova.json
 *.o
