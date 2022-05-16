@@ -1,0 +1,11 @@
+NSO raccoglie, analizza e memorizza lo stato di configurazione dei dispositivi di rete che gestisce in un database di configurazione (CDB). 
+Gli utenti e le applicazioni possono quindi "chiedere" a NSO di creare, leggere, aggiornare o eliminare la configurazione in modo programmatico, ad hoc o tramite servizi di rete personalizzabili.
+
+NSO utilizza pacchetti software chiamati Network Element Drivers (NED) per facilitare le interazioni telnet, SSH o API con i dispositivi che gestisce.
+ Il NED fornisce un livello di astrazione che legge la configurazione in esecuzione del dispositivo e la analizza in un'istantanea convalidata dal modello di dati nel CDB.
+
+I NED consentono anche l'inverso, creando la configurazione di rete dagli input di dati del CDB e inviando poi le configurazioni ai dispositivi di rete. 
+Esistono centinaia di NED che coprono tutte le piattaforme Cisco (tra cui IOS-XE, IOS-XR, NX-OS e ASA) e tutte le principali piattaforme non Cisco.
+
+
+Ciao Gaia scusami ma ho dei problemi di connessione (non sto a casa) e non riesco a collegarmi ho fatto delle slide per il gruppo 1 al quale appartengo li ho anche avvisati, in ogni caso scusa anche per l'altra volta, ho esagerato e non ci siamo capiti.

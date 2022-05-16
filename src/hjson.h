@@ -28,7 +28,6 @@
     #define INIT_SIZE_3 800
 #endif
 
-#define max(x,y){x > y ? true, false}
 
 
 enum{
@@ -41,7 +40,6 @@ enum{
 	OBJ_DICT,
     OBJ_ARRAY,
     OBJ_SIMPLE
-     //STAR LINKED :)
 };
 
 
@@ -72,8 +70,16 @@ Json *json_parse(const char *, Json **);
 Json *json_parse_value(Json **head_ref, FILE *pr, char *first, char *key);
 Json *json_parse_array(Json **head_ref, FILE *pr);
 Json *json_parse_dict(Json **head_ref, FILE *pr);
-void delete_json(Json **, Json **);
 
+void delete_json(Json **, Json **);
+void delete_dict(Json **head);
+void delete_array(Json **head);
+
+
+
+void printf_json(Json **head,Json **tail);
+void printf_value(Json **head);
+void printf_obj(Json **head);
 
 
 #endif

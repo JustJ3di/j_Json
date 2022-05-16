@@ -1,6 +1,6 @@
 # hejson
 Json parser.
-## the main struct]
+## the main struct
 ```c
 typedef struct json{
 

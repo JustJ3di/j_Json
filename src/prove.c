@@ -21,18 +21,15 @@ int main()
         (curr) = curr->next;
     }
 
-    while(head->next->obj_json)
-    {
-        printf("%d ##### \n", head->next->obj_json->type);   
-        head->next->obj_json = head->next->obj_json->next;
-    }
+    printf("jeu %s\n",head->obj_json->key);
     
-  //  printf("%d \n",(head)->next->next->obj_int);
+    //free(head->obj_json->key);
+   //printf("%s \n",(head)->obj_json->key);
    
     
     
 
-    //delete_json(&tail, &head);
+    delete_json(&tail, &head);
 
     return 0;
 }

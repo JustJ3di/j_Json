@@ -35,6 +35,17 @@ static Json  *json_init(int type){
         exit(EXIT_FAILURE);
 
     
+    for (size_t i = 0; i < size; i++)
+    {
+        //initialize value
+        json->next = NULL;
+        json->type = type; //magic number of init
+        json->obj_string = NULL;
+        json->key = NULL;
+    }
+      
+
+    
     //initialize value
     json->next = NULL;
     json->type = type; //magic number of init
@@ -195,16 +206,20 @@ void push_json_json(Json **head_ref, char *eventualy_key)
     //alloc list
     new_json->obj_json = malloc(sizeof(Json)*INITIAL_INIT_SIZE);
 
+    
+
     //start new linked list
 
     if (eventualy_key != NULL) //set a key if we need it!
     {
+        new_json->type = OBJ_DICT;
         new_json->key = (char *)malloc(strlen(eventualy_key) + 1);
         strcpy(new_json->key, eventualy_key);
     }
     else  //push array.
     {
         new_json->type = OBJ_ARRAY;
+        new_json->key = NULL;
         new_json->obj_json->next = NULL;
     }
    
@@ -455,12 +470,12 @@ Json *json_parse_array(Json **head_ref, FILE *pr )
            
             
         }
-	else if(c == '{')
-	{
-	   push_json_json(head_ref, NULL);
-	   (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
+        else if(c == '{')
+        {
+        push_json_json(head_ref, NULL);
+        (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
 
-	}
+        }
         
 
     }
@@ -510,7 +525,7 @@ Json *json_parse_dict(Json **head_ref, FILE *pr ){
             
         } 
         else if(c == '"' 
-	&& value == false) //find key
+	    && value == false) //find key
        	{
             get_string(pr, &c, key);
 
@@ -538,7 +553,67 @@ Json *json_parse_dict(Json **head_ref, FILE *pr ){
 
 }
 
+void delete_dict(Json **head)
+{
+    while((*head)->next)
+        {
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }
+            else if ((*head)->type == OBJ_ARRAY )
+            {   
+                Json *curr = (*head)->obj_json; 
+                delete_array(&curr);
+            }
+            else if ((*head)->type == OBJ_DICT)
+            {
+                Json *curr = (*head)->obj_json; 
+                delete_dict(&curr);
+            }
+            
+            free((*head)->key);
+            (*head) = (*head)->next;
+        }   
 
+        free(*head);
+
+}
+
+void delete_array(Json **head)
+{   
+
+    while((*head)->next)
+        {
+                           
+            if((*head)->key)
+                free((*head)->key);
+            
+
+        
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }else if ((*head)->type == OBJ_ARRAY)
+            {   
+
+                
+                Json *curr = (*head)->obj_json; 
+                delete_array(&curr);
+            }
+            else if ((*head)->type == OBJ_DICT)
+            {
+                Json *curr = (*head)->obj_json;
+                delete_dict(&curr);
+            }
+
+
+            (*head) = (*head)->next;    
+
+        }          
+
+        free(*head);
+}
 
 
 void delete_json(Json **tail,Json  **head)
@@ -552,24 +627,26 @@ void delete_json(Json **tail,Json  **head)
         }
         
         free(*tail);
-    }else if ((*tail)->type == OBJ_ARRAY)
-    {
+    }
+    else if ((*tail)->type == OBJ_ARRAY)
+    {        
         while(*head)
         {
             if ((*head)->type == OBJ_STRING)
             {
                 free((*head)->obj_string);
             }
-            else if ((*head)->type == OBJ_ARRAY)
+            else if ((*head)->type == OBJ_ARRAY && (*head)!= *tail)
             {   
-                
-                free((*head)->obj_json);
+                Json *curr = (*head)->obj_json; 
+                delete_array(&curr);                    
             }
             
             (*head) = (*head)->next;
         }   
 
         free(*tail);
+
     }
     else if((*tail)->type == OBJ_DICT)
     {
@@ -579,10 +656,10 @@ void delete_json(Json **tail,Json  **head)
             {
                 free((*head)->obj_string);
             }
-            else if ((*head)->type == OBJ_ARRAY)
+            else if ((*head)->type ==OBJ_DICT && (*head)!= *tail)
             {   
-                
-                free((*head)->obj_json);
+                Json *curr = (*head)->obj_json;  
+                delete_dict(&curr);  
             }
             
             free((*head)->key);
@@ -592,7 +669,132 @@ void delete_json(Json **tail,Json  **head)
         free(*tail);
     }
     
+
+}
+
+
+
+
+void printf_array(Json **head)
+{
+
+    while((*head)->next)
+        {
+                
+        if ((*head)->type == OBJ_STRING)
+        {
+            printf("%s\n",(*head)->obj_string);
+        }
+        else if((*head)->type == OBJ_INT)
+        {
+            printf("%d\n",(*head)->obj_int);
+        }
+        else if((*head)->type == OBJ_DOUBLE)
+        {
+            printf("%d\n",(*head)->obj_double);
+        }
+        else if((*head)->type == OBJ_NULL)
+        {
+            printf("null");
+        }
+        else if ((*head)->type == OBJ_BOOL)
+        {
+            printf("%d",(*head)->obj_int);
+        }
+            else if ((*head)->type == OBJ_ARRAY)
+            {   
+
+                
+                Json *curr = (*head)->obj_json; 
+                delete_array(&curr);
+            }
+            else if ((*head)->type == OBJ_DICT)
+            {
+                Json *curr = (*head)->obj_json;
+                delete_dict(&curr);
+            }
+
+
+            (*head) = (*head)->next;    
+
+        }          
+
+        free(*head);
+
+}
+
+
+void printf_value(Json **head)
+{
+    if ((*head)->type == OBJ_STRING)
+    {
+        printf("%s\n",(*head)->obj_string);
+    }
+    else if((*head)->type == OBJ_INT)
+    {
+        printf("%d\n",(*head)->obj_int);
+    }
+    else if((*head)->type == OBJ_DOUBLE)
+    {
+        printf("%d\n",(*head)->obj_double);
+    }
+    else if((*head)->type == OBJ_NULL)
+    {
+        printf("null");
+    }
+    else if ((*head)->type == OBJ_BOOL)
+    {
+        printf("%d",(*head)->obj_int);
+    }
+
+}
+
+void printf_json(Json **tail, Json **head){
+
+   if ((*tail)->type == OBJ_SIMPLE)
+    {
+        printf_value(*head);
+      
+    }
+    else if ((*tail)->type == OBJ_ARRAY)
+    {        
+        while(*head)
+        {
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }
+            else if ((*head)->type == OBJ_ARRAY && (*head)!= *tail)
+            {   
+                Json *curr = (*head)->obj_json; 
+                delete_array(&curr);                    
+            }
+            
+            (*head) = (*head)->next;
+        }   
+
+        free(*tail);
+
+    }
+    else if((*tail)->type == OBJ_DICT)
+    {
+        while(*head)
+        {
+            if ((*head)->type == OBJ_STRING)
+            {
+                free((*head)->obj_string);
+            }
+            else if ((*head)->type ==OBJ_DICT && (*head)!= *tail)
+            {   
+                Json *curr = (*head)->obj_json;  
+                delete_dict(&curr);  
+            }
+            
+            free((*head)->key);
+            (*head) = (*head)->next;
+        }   
+
+        free(*tail);
+    }
     
-
-
 }
