@@ -18,3 +18,15 @@ typedef struct json{
 }Json;
 
 ```
+
+##the push func
+
+```c
+void push_json_int(Json **head_ref, int value, char *eventualy_key);
+void push_json_double(Json **head_ref, double value, char *eventualy_key);
+void push_json_string(Json **head_ref, char *value, char *eventualy_key);
+void push_json_bool(Json **head_ref, bool value, char *eventualy_key);
+void push_json_null(Json **head_ref, char *eventualy_key);
+void push_json_json(Json **head_ref, char *eventualy_key);
+
+```
