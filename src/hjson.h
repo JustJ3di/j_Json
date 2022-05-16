@@ -48,6 +48,7 @@ typedef struct json{
     char *key; // key for the dict object
     int type; // 8 byte
     struct json *next; //8 byte
+    int size; // 8 byte recod the size
     union{  
         int obj_int; //is also bool
         double obj_double;
@@ -55,9 +56,10 @@ typedef struct json{
         struct json *obj_json; //new head 
     };
 
-
 }Json;
 
+
+int get_size(Json **);
 
 void push_json_int(Json **head_ref, int value, char *eventualy_key);
 void push_json_double(Json **head_ref, double value, char *eventualy_key);

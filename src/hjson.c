@@ -16,7 +16,7 @@
 
 #define newnodo(pointer) {pointer + 1};
 
-
+int get_size(Json **json) {return (*json)->size;}
 
 static Json  *json_init(int type){
 
@@ -38,19 +38,23 @@ static Json  *json_init(int type){
     for (size_t i = 0; i < size; i++)
     {
         //initialize value
-        json->next = NULL;
-        json->type = type; //magic number of init
-        json->obj_string = NULL;
-        json->key = NULL;
+        json[i].next = NULL;
+        json[i].type = type; //magic number of init
+        json[i].size = (int)i;
+        json[i].obj_string = NULL;
+        json[i].key = NULL;
     }
-      
-
     
+
+
+    /*
     //initialize value
     json->next = NULL;
     json->type = type; //magic number of init
     json->obj_string = NULL;
     json->key = NULL;
+    */
+
 
     return json;
 
@@ -204,7 +208,9 @@ void push_json_json(Json **head_ref, char *eventualy_key)
     //i need to append a memeorys'control
     
     //alloc list
-    new_json->obj_json = malloc(sizeof(Json)*INITIAL_INIT_SIZE);
+    new_json->obj_json = json_init(OBJ_ARRAY);
+
+    
 
     
 
@@ -465,15 +471,14 @@ Json *json_parse_array(Json **head_ref, FILE *pr )
 
             push_json_json(head_ref, NULL);
             
-            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);
-            
-           
+            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);    
             
         }
         else if(c == '{')
         {
-        push_json_json(head_ref, NULL);
-        (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
+            push_json_json(head_ref, NULL);
+
+            (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
 
         }
         
@@ -675,68 +680,67 @@ void delete_json(Json **tail,Json  **head)
 
 
 
-void printf_array(Json **head)
+void printf_obj(Json **head)
 {
 
+
+
     while((*head)->next)
-        {
+    {
                 
-        if ((*head)->type == OBJ_STRING)
-        {
-            printf("%s\n",(*head)->obj_string);
-        }
-        else if((*head)->type == OBJ_INT)
-        {
-            printf("%d\n",(*head)->obj_int);
-        }
-        else if((*head)->type == OBJ_DOUBLE)
-        {
-            printf("%d\n",(*head)->obj_double);
-        }
-        else if((*head)->type == OBJ_NULL)
-        {
-            printf("null");
-        }
-        else if ((*head)->type == OBJ_BOOL)
-        {
-            printf("%d",(*head)->obj_int);
-        }
-            else if ((*head)->type == OBJ_ARRAY)
-            {   
-
-                
-                Json *curr = (*head)->obj_json; 
-                delete_array(&curr);
-            }
-            else if ((*head)->type == OBJ_DICT)
+        if ((*head)->type == OBJ_ARRAY)
+        {   
+            
+            Json *curr = (*head)->obj_json; 
+            if(curr->key)
             {
-                Json *curr = (*head)->obj_json;
-                delete_dict(&curr);
+                printf("{");
+                
             }
+            else
+                printf("[");
+
+            printf_obj(&curr);
+
+            printf("],");
 
 
-            (*head) = (*head)->next;    
+        }
+        else if ((*head)->type == OBJ_DICT)
+        {
+            Json *curr = (*head)->obj_json;
+            printf_obj(&curr);
+        }   
+        else
+        {
+            if((*head)->key)
+                printf("%s:",(*head)->key);
+            printf_value(head);
+            
+            if((*head)->key)
+                printf("}");
+            
+        }        
+        (*head) = (*head)->next;    
 
-        }          
-
-        free(*head);
-
+    }
 }
 
 
 void printf_value(Json **head)
 {
+
     if ((*head)->type == OBJ_STRING)
     {
-        printf("%s\n",(*head)->obj_string);
+        printf("%s, ",(*head)->obj_string);
     }
     else if((*head)->type == OBJ_INT)
     {
-        printf("%d\n",(*head)->obj_int);
+        printf("%d, ",(*head)->obj_int);
     }
     else if((*head)->type == OBJ_DOUBLE)
     {
-        printf("%d\n",(*head)->obj_double);
+        printf("%f, ",(*head)->obj_double);
     }
     else if((*head)->type == OBJ_NULL)
     {
@@ -744,57 +748,33 @@ void printf_value(Json **head)
     }
     else if ((*head)->type == OBJ_BOOL)
     {
-        printf("%d",(*head)->obj_int);
+        printf("%d, ",(*head)->obj_int);
     }
 
 }
 
 void printf_json(Json **tail, Json **head){
 
-   if ((*tail)->type == OBJ_SIMPLE)
-    {
-        printf_value(*head);
-      
+    Json *t = *tail;
+    Json *h = *head;
+        
+    if ((t)->type == OBJ_SIMPLE)
+    {   
+        printf_value(&h);
     }
-    else if ((*tail)->type == OBJ_ARRAY)
-    {        
-        while(*head)
-        {
-            if ((*head)->type == OBJ_STRING)
-            {
-                free((*head)->obj_string);
-            }
-            else if ((*head)->type == OBJ_ARRAY && (*head)!= *tail)
-            {   
-                Json *curr = (*head)->obj_json; 
-                delete_array(&curr);                    
-            }
-            
-            (*head) = (*head)->next;
-        }   
-
-        free(*tail);
-
+    else if ((t)->type == OBJ_ARRAY)
+    {   
+        printf("[");
+        printf_obj(&h);
+        printf("]\n");
     }
     else if((*tail)->type == OBJ_DICT)
     {
-        while(*head)
-        {
-            if ((*head)->type == OBJ_STRING)
-            {
-                free((*head)->obj_string);
-            }
-            else if ((*head)->type ==OBJ_DICT && (*head)!= *tail)
-            {   
-                Json *curr = (*head)->obj_json;  
-                delete_dict(&curr);  
-            }
-            
-            free((*head)->key);
-            (*head) = (*head)->next;
-        }   
+        printf("{");
+        printf_obj(&h);
+        printf("}");
 
-        free(*tail);
     }
+
     
 }
