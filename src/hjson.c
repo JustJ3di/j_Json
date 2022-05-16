@@ -46,16 +46,6 @@ static Json  *json_init(int type){
     }
     
 
-
-    /*
-    //initialize value
-    json->next = NULL;
-    json->type = type; //magic number of init
-    json->obj_string = NULL;
-    json->key = NULL;
-    */
-
-
     return json;
 
 }   

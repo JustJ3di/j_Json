@@ -1,5 +1,9 @@
 # hejson
 Json parser.
+
+## TO start
+include "hjson.h" in your projects and run make
+
 ## the main struct
 ```c
 typedef struct json{
