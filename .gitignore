@@ -2,4 +2,5 @@
 prova
 hejson.*
 prova.json
+*.json
 *.o
