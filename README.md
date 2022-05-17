@@ -23,7 +23,7 @@ typedef struct json{
 
 ```
 
-## the push funcs
+## the push functions
 
 ```c
 void push_json_int(Json **head_ref, int value, char *eventualy_key);
