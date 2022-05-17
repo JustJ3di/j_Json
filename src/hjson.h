@@ -76,13 +76,14 @@ void delete_json(Json **, Json **);
 void delete_dict(Json **head);
 void delete_array(Json **head);
 
-void print(Json **head);
 
 void printf_json(Json **head,Json **tail);
 void printf_value(Json **head);
 void printf_obj(Json **head);
 
 void serialize(Json **head);
+void serialize_array(FILE *pr, Json *tail, int size);
+void serialize_dict(FILE *pr, Json *tail, int size);
 
 
 #endif

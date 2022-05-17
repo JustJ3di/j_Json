@@ -786,7 +786,103 @@ void printf_json(Json **tail, Json **head){
     
 }
 
-void print(Json **head)
+
+static void serialize_value(FILE *pr, Json head)
+{
+
+    switch (head.type)
+    {
+    case OBJ_NULL:
+        fprintf(pr, "null");
+        break;
+    case OBJ_BOOL:
+        if (head.obj_int == 1)
+            fprintf(pr , "true");
+        else
+            fprintf(pr,"false") ;
+        break; 
+    case OBJ_INT:
+        fprintf(pr, "%d", head.obj_int);
+        break;
+    case OBJ_STRING:
+        fprintf(pr ,"%s", head.obj_string);
+        break;
+    }
+    
+
+}
+
+void serialize_array(FILE *pr, Json *tail, int size)
+{
+
+    fprintf(pr,"[");
+    for (int i = 1; i < size+1; i++)
+    {
+        switch (tail[i].type)
+        {
+        case OBJ_ARRAY:
+            
+            serialize_array(pr, get_tail(&tail[i].obj_json), get_size(&tail[i].obj_json)); 
+
+            break;
+        
+        default:
+            if (tail[i].key)
+            {
+                fprintf(pr, "%s", tail[i].key);
+                fprintf(pr, ":");    
+            }
+            
+            serialize_value(pr, tail[i]);
+            break;
+        }
+        
+        if (i != size)
+        {
+            fprintf(pr,",");
+        }
+        
+    }
+    fprintf(pr,"]");
+
+}
+
+void serialize_dict(FILE *pr, Json *tail, int size)
+{
+
+    fprintf(pr, "{");
+    for (int i = 1; i < size+1; i++)
+    {
+        switch (tail[i].type)
+        {
+        case OBJ_DICT:
+            
+            fprintf(pr, "%s", tail[i].key);
+            fprintf(pr, ":");
+            serialize_array(pr, get_tail(&tail[i].obj_json), get_size(&tail[i].obj_json));
+
+            break;
+        
+        default:
+            fprintf(pr, "%s", tail[i].key);
+            fprintf(pr, ":");
+            serialize_value(pr, tail[i]);
+            break;
+        }
+        
+        if (i != size)
+        {
+            fprintf(pr,",");
+        }
+        
+    }
+    fprintf(pr,"}");    
+
+
+}
+
+
+void serialize(Json **head)
 {
 
     int size = get_size(head);
@@ -794,18 +890,15 @@ void print(Json **head)
     Json *tail = get_tail(head);
     FILE *pr = fopen("new.json","w");
 
-    fprintf(pr,"[");
-    for (int i = 1; i < size; i++)
+    if (tail->type == OBJ_ARRAY)
     {
-        
-        fprintf(pr,"%d",tail[i].obj_int);
-        if (i!=size-1)
-        {
-            fprintf(pr,",");
-        }
-        
+        serialize_array(pr, tail, size);
+    }else if (tail->type == OBJ_DICT)
+    {
+        serialize_dict(pr , tail, size);
     }
-    fprintf(pr,"]");
+    
+    
 
     fclose(pr);
 

@@ -15,7 +15,7 @@ int main()
 
     //printf("(%s)\n", head->obj_string);
 
-    print(&curr);
+    serialize(&curr);
    
     //free(head->obj_json->key);
    //printf("%s \n",(head)->obj_json->key);
