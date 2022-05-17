@@ -529,7 +529,9 @@ Json *json_parse_dict(Json **head_ref, FILE *pr ){
         || (isdigit(c))
         || c == '-')) // parse null
         {
+#if DEBUG
             printf("key0 (%s)\n", key);
+#endif            
             (*head_ref) = json_parse_value(head_ref, pr, &c , key);
             value = false;
             
@@ -685,107 +687,6 @@ void delete_json(Json **tail,Json  **head)
 
 
 
-void printf_obj(Json **head)
-{
-
-
-
-    while((*head)->next)
-    {
-                
-        if ((*head)->type == OBJ_ARRAY)
-        {   
-            
-            Json *curr = (*head)->obj_json; 
-            if(curr->key)
-            {
-                printf("{");
-                
-            }
-            else
-                printf("[");
-
-            printf_obj(&curr);
-
-            printf("],");
-
-
-        }
-        else if ((*head)->type == OBJ_DICT)
-        {
-            Json *curr = (*head)->obj_json;
-            printf_obj(&curr);
-        }   
-        else
-        {
-            if((*head)->key)
-                printf("%s:",(*head)->key);
-            printf_value(head);
-            
-            if((*head)->key)
-                printf("}");
-            
-        }        
-        (*head) = (*head)->next;    
-
-    }
-}
-
-
-void printf_value(Json **head)
-{
-
-    if ((*head)->type == OBJ_STRING)
-    {
-        printf("%s, ",(*head)->obj_string);
-    }
-    else if((*head)->type == OBJ_INT)
-    {
-        printf("%d, ",(*head)->obj_int);
-    }
-    else if((*head)->type == OBJ_DOUBLE)
-    {
-        printf("%f, ",(*head)->obj_double);
-    }
-    else if((*head)->type == OBJ_NULL)
-    {
-        printf("null");
-    }
-    else if ((*head)->type == OBJ_BOOL)
-    {
-        printf("%d, ",(*head)->obj_int);
-    }
-
-}
-
-
-
-void printf_json(Json **tail, Json **head){
-
-    Json *t = *tail;
-    Json *h = *head;
-        
-    if ((t)->type == OBJ_SIMPLE)
-    {   
-        printf_value(&h);
-    }
-    else if ((t)->type == OBJ_ARRAY)
-    {   
-        printf("[");
-        printf_obj(&h);
-        printf("]\n");
-    }
-    else if((*tail)->type == OBJ_DICT)
-    {
-        printf("{");
-        printf_obj(&h);
-        printf("}");
-
-    }
-
-    
-}
-
 
 static void serialize_value(FILE *pr, Json head)
 {
@@ -801,6 +702,9 @@ static void serialize_value(FILE *pr, Json head)
         else
             fprintf(pr,"false") ;
         break; 
+    case OBJ_DOUBLE:
+        fprintf(pr, "%f", head.obj_double);
+        break;
     case OBJ_INT:
         fprintf(pr, "%d", head.obj_int);
         break;
@@ -882,22 +786,24 @@ void serialize_dict(FILE *pr, Json *tail, int size)
 }
 
 
-void serialize(Json **head)
+void serialize(Json **head, FILE *pr)
 {
 
     int size = get_size(head);
 
     Json *tail = get_tail(head);
-    FILE *pr = fopen("new.json","w");
 
     if (tail->type == OBJ_ARRAY)
     {
         serialize_array(pr, tail, size);
+
     }else if (tail->type == OBJ_DICT)
     {
         serialize_dict(pr , tail, size);
+    }else
+    {
+        serialize_value(pr , **head);
     }
-    
     
 
     fclose(pr);

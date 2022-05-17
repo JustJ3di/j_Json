@@ -9,19 +9,11 @@ int main()
 
     assert(head != tail); //beacause the is  at least one  push on the linked.  
     
-  
-
     Json *curr = head;
 
-    //printf("(%s)\n", head->obj_string);
 
-    serialize(&curr);
+    serialize(&curr, stdout);
    
-    //free(head->obj_json->key);
-   //printf("%s \n",(head)->obj_json->key);
-   
-    
-    printf_json(&tail,&head);
 
     delete_json(&tail, &head);
 
