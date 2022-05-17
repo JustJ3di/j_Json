@@ -1,22 +1,35 @@
 #include "hjson.h"
+#if DEBUG
 
-	int fgect2(FILE *pr,int line,const char *fun)
-	{
-		char c = fgetc(pr);
-		if (isspace(c)==0)
-		{
-			printf("(%c) trovato in fun (%s) alla line %d \n",c,fun,line);
-		}
-		return c;
-	
-	}
-	
+    int fgect2(FILE *pr,int line,const char *fun)
+    {
+        char c = fgetc(pr);
+        if (isspace(c)==0)
+        {
+            printf("(%c) trovato in fun (%s) alla line %d \n",c,fun,line);
+        }
+        return c;
+
+    }
+
 #define fgetc(ch) fgect2(ch,__LINE__,__func__);
-
+#endif
 
 #define newnodo(pointer) {pointer + 1};
 
-int get_size(Json **json) {return (*json)->size;}
+static int get_size(Json **json) {return (*json)->size;}
+
+static Json *get_tail(Json **head){
+
+    Json *tail = *head;
+    while (tail->next)
+    {
+        tail = tail->next;
+    }
+    
+    return tail;
+
+}
 
 static Json  *json_init(int type){
 
@@ -35,14 +48,15 @@ static Json  *json_init(int type){
         exit(EXIT_FAILURE);
 
     
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < (int )size; i++)
     {
-        //initialize value
+        /*initialize value*/
         json[i].next = NULL;
-        json[i].type = type; //magic number of init
-        json[i].size = (int)i;
+        json[i].type = type; 
+        json[i].size = i;
         json[i].obj_string = NULL;
         json[i].key = NULL;
+
     }
     
 
@@ -58,6 +72,7 @@ void push_json_int(Json **head_ref, int value, char *eventualy_key)
     
     //set the value
     new_json->obj_int = value;
+
 
     new_json->type = OBJ_INT;
 
@@ -743,6 +758,8 @@ void printf_value(Json **head)
 
 }
 
+
+
 void printf_json(Json **tail, Json **head){
 
     Json *t = *tail;
@@ -767,4 +784,29 @@ void printf_json(Json **tail, Json **head){
     }
 
     
+}
+
+void print(Json **head)
+{
+
+    int size = get_size(head);
+
+    Json *tail = get_tail(head);
+    FILE *pr = fopen("new.json","w");
+
+    fprintf(pr,"[");
+    for (int i = 1; i < size; i++)
+    {
+        
+        fprintf(pr,"%d",tail[i].obj_int);
+        if (i!=size-1)
+        {
+            fprintf(pr,",");
+        }
+        
+    }
+    fprintf(pr,"]");
+
+    fclose(pr);
+
 }

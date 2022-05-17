@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <assert.h>
 
+#define DEBUG 0
 
 //simple size for a value object
 #ifndef SIMPLE_SIZE
@@ -59,8 +60,6 @@ typedef struct json{
 }Json;
 
 
-int get_size(Json **);
-
 void push_json_int(Json **head_ref, int value, char *eventualy_key);
 void push_json_double(Json **head_ref, double value, char *eventualy_key);
 void push_json_string(Json **head_ref, char *value, char *eventualy_key);
@@ -77,11 +76,13 @@ void delete_json(Json **, Json **);
 void delete_dict(Json **head);
 void delete_array(Json **head);
 
-
+void print(Json **head);
 
 void printf_json(Json **head,Json **tail);
 void printf_value(Json **head);
 void printf_obj(Json **head);
+
+void serialize(Json **head);
 
 
 #endif
