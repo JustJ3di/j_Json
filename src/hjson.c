@@ -501,6 +501,7 @@ Json *json_parse_dict(Json **head_ref, FILE *pr ){
 
     bool value = false; 
 
+
     char key[128];
 
     while (c != '}')
@@ -553,7 +554,7 @@ Json *json_parse_dict(Json **head_ref, FILE *pr ){
         }else if(c== '{')
         {
             push_json_json(head_ref, key);
-            (*head_ref)->obj_json = json_parse_array(&(*head_ref)->obj_json, pr);
+            (*head_ref)->obj_json = json_parse_dict(&(*head_ref)->obj_json, pr);
         
         }
         
@@ -718,26 +719,36 @@ static void serialize_value(FILE *pr, Json head)
 
 void serialize_array(FILE *pr, Json *tail, int size)
 {
-
-    fprintf(pr,"[");
-    for (int i = 1; i < size+1; i++)
+    int i = 1;
+    
+    if (tail[1].key)
+    {   
+        fprintf(pr, "{");
+        fprintf(pr, "%s", tail[1].key);
+        fprintf(pr, ":"); 
+    }
+    else
+    {
+        fprintf(pr, "[");
+    }
+        
+    for (i = 1; i < size+1; i++)
     {
         switch (tail[i].type)
         {
         case OBJ_ARRAY:
             
             serialize_array(pr, get_tail(&tail[i].obj_json), get_size(&tail[i].obj_json)); 
-
             break;
         
         default:
-            if (tail[i].key)
+            if (tail[i].key && i!=1)
             {   
-                fprintf(pr, "{");
+                
                 fprintf(pr, "%s", tail[i].key);
                 fprintf(pr, ":"); 
                 serialize_value(pr, tail[i]);
-                fprintf(pr, "}");
+                
 
             }
             else
@@ -756,7 +767,12 @@ void serialize_array(FILE *pr, Json *tail, int size)
         }
         
     }
-    fprintf(pr,"]");
+    if(tail[i-1].key)
+        fprintf(pr,"}");
+    else{
+        fprintf(pr,"]");
+    }
+    
 
 }
 
