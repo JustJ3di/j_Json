@@ -732,12 +732,21 @@ void serialize_array(FILE *pr, Json *tail, int size)
         
         default:
             if (tail[i].key)
-            {
+            {   
+                fprintf(pr, "{");
                 fprintf(pr, "%s", tail[i].key);
-                fprintf(pr, ":");    
+                fprintf(pr, ":"); 
+                serialize_value(pr, tail[i]);
+                fprintf(pr, "}");
+
+            }
+            else
+            {
+
+                serialize_value(pr, tail[i]);
+
             }
             
-            serialize_value(pr, tail[i]);
             break;
         }
         

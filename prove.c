@@ -11,10 +11,10 @@ int main()
     
     Json *curr = head;
 
+    FILE *pr = fopen("new.json" ,"w");
 
-    serialize(&curr, stdout);
+    serialize(&curr, pr);
    
-
     delete_json(&tail, &head);
 
     return 0;
