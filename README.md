@@ -41,3 +41,11 @@ Json *json_parse_value(Json **head_ref, FILE *pr, char *first, char *key);
 Json *json_parse_array(Json **head_ref, FILE *pr);
 Json *json_parse_dict(Json **head_ref, FILE *pr);
 ```
+
+## serialize
+
+```c
+void serialize(Json **head, FILE *);
+void serialize_array(FILE *pr, Json *tail, int size);
+void serialize_dict(FILE *pr, Json *tail, int size);
+```
