@@ -49,3 +49,21 @@ void serialize(Json **head, FILE *);
 void serialize_array(FILE *pr, Json *tail, int size);
 void serialize_dict(FILE *pr, Json *tail, int size);
 ```
+
+## the main idea 
+The idea is to initialize everything with a statically managed linked-list , 
+and later have the possibility then to serialize the possibly modified content, 
+handling it in a simpler way as an array thanks to the get_tail function that returns me the pointer to the first element of the list.
+```c
+static Json *get_tail(Json **head){
+
+    Json *tail = *head;
+    while (tail->next)
+    {
+        tail = tail->next;
+    }
+    
+    return tail;
+
+}
+```
