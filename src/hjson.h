@@ -1,6 +1,19 @@
 #ifndef HSON
 #define HSON
 
+/*
+888    888 8888888888 888888  .d8888b.   .d88888b.  888b    888 
+888    888 888          "88b d88P  Y88b d88P" "Y88b 8888b   888 
+888    888 888           888 Y88b.      888     888 88888b  888 
+8888888888 8888888       888  "Y888b.   888     888 888Y88b 888 
+888    888 888           888     "Y88b. 888     888 888 Y88b888 
+888    888 888           888       "888 888     888 888  Y88888 
+888    888 888           88P Y88b  d88P Y88b. .d88P 888   Y8888 
+888    888 8888888888    888  "Y8888P"   "Y88888P"  888    Y888 
+                       .d88P                                    
+                     .d88P"                                     
+                    888P"   
+*/
 
 #include <stdlib.h>
 #include <string.h>
@@ -46,8 +59,9 @@ enum{
 
 typedef struct json{
 
-    char *key; // key for the dict object
-    int type; // 8 byte
+    /*key for the dict object*/
+    char *key; 
+    int type; /* 8 byte */
     struct json *next; //8 byte
     int size; // 8 byte recod the size
     union{  
