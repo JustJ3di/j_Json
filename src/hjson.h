@@ -51,6 +51,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdint.h>
 
 #define DEBUG 0
 
@@ -87,6 +88,8 @@ enum{
 };
 
 
+
+
 typedef struct json{
 
     /*key for the dict object*/
@@ -95,7 +98,7 @@ typedef struct json{
     struct json *next; //8 byte
     int size; // 8 byte recod the size
     union{  
-        int obj_int; //is also bool
+        int32_t obj_int; //is also bool
         double obj_double;
         char *obj_string;
         struct json *obj_json; //new head 
