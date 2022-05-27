@@ -719,7 +719,7 @@ static void serialize_value(FILE *pr, Json head)
 
 void serialize_array(FILE *pr, Json *tail, int size)
 {
-    int i = 1;
+    int i;
     
     if (tail[1].key)
     {   
@@ -737,7 +737,6 @@ void serialize_array(FILE *pr, Json *tail, int size)
         switch (tail[i].type)
         {
         case OBJ_ARRAY:
-            
             serialize_array(pr, get_tail(&tail[i].obj_json), get_size(&tail[i].obj_json)); 
             break;
         
@@ -749,13 +748,10 @@ void serialize_array(FILE *pr, Json *tail, int size)
                 fprintf(pr, ":"); 
                 serialize_value(pr, tail[i]);
                 
-
             }
             else
             {
-
                 serialize_value(pr, tail[i]);
-
             }
             
             break;
@@ -764,10 +760,10 @@ void serialize_array(FILE *pr, Json *tail, int size)
         if (i != size)
         {
             fprintf(pr,",");
-        }
+        }   
         
     }
-    if(tail[i-1].key)
+    if(tail[i - 1].key)
         fprintf(pr,"}");
     else{
         fprintf(pr,"]");
