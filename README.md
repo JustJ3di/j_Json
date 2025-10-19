@@ -9,9 +9,9 @@ include "hjson.h" in your projects and run ```make```
 typedef struct json{
 
     char *key; // key for the dict object
-    int type; // 8 byte
+    int type; // 4 byte
     struct json *next; //8 byte
-    int size; // 8 byte recod the size
+    int size; // 4 byte recod the size
     union{  
         int obj_int; //is also bool
         double obj_double;
