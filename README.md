@@ -4,6 +4,8 @@ Json parser.
 ## TO start
 include "hjson.h" in your projects and run ```make```
 
+Run the C test cases with ```make test```.
+
 ## the main struct
 ```c
 typedef struct json{
